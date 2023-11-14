@@ -37,7 +37,7 @@ psi.fun <- function(f, nspecies = 2) {
   return(psi )
 }
 
-psi.fun(f = cbind(beta1, beta2, beta12))
+# psi.fun(f = cbind(beta1, beta2, beta12))
 
 
 # Function to simulate data and fit a 2-species 
