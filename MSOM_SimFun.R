@@ -188,12 +188,16 @@ MSOM_SimandFit.fun <- function(beta1, beta2, beta12, nsites, nspecies = 2, J = 3
         det_df$Species <- names(y)
         det_df$niter <- rep(s, nrow(det_df))
         det_df$conv <- mod.conv
+        det_df$og_param.val <- qlogis(p_true)
         
         ## State (occ) parameters and data frames
         state_df <- fit_sum$state
-        state_df$Parameter <- paste0("beta", 1:length(beta))
+        state_df$Parameter <- c(paste0("beta1.", seq(0, length(beta1)-1)),
+                                paste0("beta2.", seq(0, length(beta2)-1)),
+                                paste0("beta12.", seq(0, length(beta12)-1)))
         state_df$niter <- rep(s, nrow(state_df))
         state_df$conv <- mod.conv
+        state_df$og_param.val <- c(beta1, beta2, beta12)
         
         #  With penalisation
         ## Detection parameters and data frames
@@ -201,13 +205,17 @@ MSOM_SimandFit.fun <- function(beta1, beta2, beta12, nsites, nspecies = 2, J = 3
         det_df.pl$Species <- names(y)
         det_df.pl$niter <- rep(s, nrow(det_df.pl))
         det_df.pl$conv <- mod.conv_pl
+        det_df.pl$og_param.val <- qlogis(p_true)
         det_df.pl$lambda <- pen.val
         
         ## State (occ) parameters and data frames
         state_df.pl <- fit_pl.sum$state
-        state_df.pl$Parameter <- paste0("beta", 1:length(beta))
+        state_df.pl$Parameter <- c(paste0("beta1.", seq(0, length(beta1)-1)),
+                                   paste0("beta2.", seq(0, length(beta2)-1)),
+                                   paste0("beta12.", seq(0, length(beta12)-1)))
         state_df.pl$niter <- rep(s, nrow(state_df.pl))
         state_df.pl$conv <- mod.conv_pl
+        state_df.pl$og_param.val <- c(beta1, beta2, beta12)
         state_df.pl$lambda <- pen.val
         
       } else {
@@ -216,14 +224,18 @@ MSOM_SimandFit.fun <- function(beta1, beta2, beta12, nsites, nspecies = 2, J = 3
         det_df1 <- fit_sum$det
         det_df1$Species <- names(y)
         det_df1$niter <- rep(s, nrow(det_df1))
+        det_df1$og_param.val <- qlogis(p_true)
         det_df1$conv <- mod.conv
        
         
         ## State (occ) parameters and data frames
         state_df1 <- fit_sum$state
-        state_df1$Parameter <- paste0("beta", 1:length(beta))
+        state_df1$Parameter <- c(paste0("beta1.", seq(0, length(beta1)-1)),
+                                 paste0("beta2.", seq(0, length(beta2)-1)),
+                                 paste0("beta12.", seq(0, length(beta12)-1)))
         state_df1$niter <- rep(s, nrow(state_df1))
         state_df1$conv <- mod.conv
+        state_df1$og_param.val <- c(beta1, beta2, beta12)
        
         
         det_df <- rbind(det_df, det_df1)
@@ -235,13 +247,17 @@ MSOM_SimandFit.fun <- function(beta1, beta2, beta12, nsites, nspecies = 2, J = 3
         det_df.pl1$Species <- names(y)
         det_df.pl1$niter <- rep(s, nrow(det_df.pl1))
         det_df.pl1$conv <- mod.conv_pl
+        det_df.pl1$og_param.val <- qlogis(p_true)
         det_df.pl1$lambda <- pen.val
         
         ## State (occ) parameters and data frames
         state_df.pl1 <- fit_pl.sum$state
-        state_df.pl1$Parameter <- paste0("beta", 1:length(beta))
+        state_df.pl1$Parameter <- c(paste0("beta1.", seq(0, length(beta1)-1)),
+                                    paste0("beta2.", seq(0, length(beta2)-1)),
+                                    paste0("beta12.", seq(0, length(beta12)-1)))
         state_df.pl1$niter <- rep(s, nrow(state_df.pl1))
         state_df.pl1$conv <- mod.conv_pl
+        state_df.pl1$og_param.val <- c(beta1, beta2, beta12)
         state_df.pl1$lambda <- pen.val
         
         det_df.pl <- rbind(det_df.pl, det_df.pl1)
