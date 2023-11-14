@@ -267,6 +267,9 @@ MSOM_SimandFit.fun <- function(beta1, beta2, beta12, nsites, nspecies = 2, J = 3
     } #s
     det_df$n.sites <- N
     state_df$n.sites <- N
+    
+    det_df.pl$n.sites <- N
+    state_df.pl$n.sites <- N
     if(N == nsites[1]){
       # Without penalisation
       N_det_df <- det_df
