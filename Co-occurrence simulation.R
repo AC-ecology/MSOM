@@ -66,6 +66,7 @@ scen1 <- MSOM_SimandFit.fun(beta1 = beta1 , beta2, beta12,
                            nspecies = nspecies, seed = 1337, nsim = nsim, J = 3)
 
 
+saveRDS(object = scen1,file = "scen1_seed1337_simResults.rds")
 
 
 # Scenario 2: Null model with weak positive interaction  ------
@@ -94,6 +95,7 @@ scen2 <- MSOM_SimandFit.fun(beta1 = beta1 , beta2, beta12,
 
 psi.fun(f= cbind(beta1,  beta2, beta12), nspecies = 2) #
 
+saveRDS(object = scen2,file = "scen2_seed1337_simResults.rds")
 
 # Scenario 3: Null model with weak positive interaction  ------
 # Parameter definition:
@@ -117,7 +119,7 @@ scen3 <- MSOM_SimandFit.fun(beta1 = beta1 , beta2, beta12,
                             nspecies = nspecies, seed = 1337, nsim = nsim, J = 3)
 
 
-
+saveRDS(object = scen3,file = "scen3_seed1337_simResults.rds")
 
 # Scenario 4: Null model with weak positive interaction  ------
 # Parameter definition:
@@ -142,7 +144,7 @@ scen4 <- MSOM_SimandFit.fun(beta1 = beta1 , beta2, beta12,
 
 
 
-
+saveRDS(object = scen4,file = "scen4_seed1337_simResults.rds")
 
 
 ## Covariate models --------------
