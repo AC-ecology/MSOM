@@ -16,9 +16,12 @@ source("MSOM_SimFun.R")
 # General characteristics (constant across scenarios) ------------
 # Sample size scenarios (nsites or N):  30 to 3,000 in steps of 10
 
-nsites <- seq(20, 3000, by =10) # this is the goal
+#nsites <- seq(20, 3000, by =10) # this is the goal
 
-nsites <- c(30,50,100,300, 500,1000,3000) # to test (13/11/2023)
+#nsites <- c(30,50,100,300, 500,1000,3000) # to test (13/11/2023)
+
+ln.sites <- seq(3, 8, by = 0.5)
+nsites <- as.integer(exp(ln.sites))
 
 
 # Number of visits (J): 3
@@ -29,6 +32,7 @@ nspecies <- 2
 nsim <- 100
 # Detection probabilities are equal for both spp & kept constant across all scenarios
 p_true <- c(0.5,0.5) # 50% detection probability
+
 # Number of scenarios: 8
 ## Null model scenarios: 4
 ## Covariate model scenarios: 4
@@ -66,7 +70,7 @@ scen1 <- MSOM_SimandFit.fun(beta1 = beta1 , beta2, beta12,
                            nspecies = nspecies, seed = 1337, nsim = nsim, J = 3)
 
 
-saveRDS(object = scen1,file = "scen1_seed1337_simResults.rds")
+saveRDS(object = scen1,file = "scen1_seed1337_simResults2.rds")
 
 
 # Scenario 2: Null model with weak positive interaction  ------
@@ -93,19 +97,18 @@ scen2 <- MSOM_SimandFit.fun(beta1 = beta1 , beta2, beta12,
 
 
 
-psi.fun(f= cbind(beta1,  beta2, beta12), nspecies = 2) #
 
-saveRDS(object = scen2,file = "scen2_seed1337_simResults.rds")
+saveRDS(object = scen2,file = "scen2_seed1337_simResults2.rds")
 
 # Scenario 3: Null model with weak positive interaction  ------
 # Parameter definition:
 # First order natural parameter f1: log-odds of presence of sp1 
 ## beta1: baseline occupancy of sp1 
-beta1 <-  0 # (50%)
+beta1 <-  0.1 # (~52%)
 
 # First order natural parameter f2: log-odds of presence of sp2 
 ## beta2: baseline occupancy of sp2, assumed equal to sp1
-beta2 <-  0 # (50%)
+beta2 <-  0.1 # (~52%)
 
 # Second order natural parameter f12: log-odds of co-occurrene of sp1 & sp2
 ## beta12: baseline log-odds of co-occurrence
@@ -119,17 +122,17 @@ scen3 <- MSOM_SimandFit.fun(beta1 = beta1 , beta2, beta12,
                             nspecies = nspecies, seed = 1337, nsim = nsim, J = 3)
 
 
-saveRDS(object = scen3,file = "scen3_seed1337_simResults.rds")
+saveRDS(object = scen3,file = "scen3_seed1337_simResults2.rds")
 
 # Scenario 4: Null model with weak positive interaction  ------
 # Parameter definition:
 # First order natural parameter f1: log-odds of presence of sp1 
 ## beta1: baseline occupancy of sp1 
-beta1 <-  0 # (~50%)
+beta1 <-  0.1 # (~50%)
 
 # First order natural parameter f2: log-odds of presence of sp2 
 ## beta2: baseline occupancy of sp2, assumed equal to sp1
-beta2 <-  0 # (~50%)
+beta2 <-  0.1 # (~50%)
 
 # Second order natural parameter f12: log-odds of co-occurrene of sp1 & sp2
 ## beta12: baseline log-odds of co-occurrence
@@ -144,8 +147,16 @@ scen4 <- MSOM_SimandFit.fun(beta1 = beta1 , beta2, beta12,
 
 
 
-saveRDS(object = scen4,file = "scen4_seed1337_simResults.rds")
+saveRDS(object = scen4,file = "scen4_seed1337_simResults2.rds")
 
+
+# PLAN
+## First results:
+### Null models
+#### Figure porpotional biases
+#### Figure of general parameters
+#### Figure for derived parameters
+#### Difference between pl and ll
 
 ## Covariate models --------------
 
@@ -159,16 +170,16 @@ det_formulas = rep("~1", nspecies)
 ##            from standard normal distributions occ_cov~N(0,1) and to include in
 ##            the linear predictors for occupancy
 
-nocc_covs <- 4
+nocc_covs <- 1
 # General formulas to be:
 # f1 = beta1.0 + beta1.1*occ_cov1 + beta1.2*occ_cov2
 # f2 = beta2.0 + beta2.1*occ_cov2
 # f12 = beta12.0 + beta12.1*occ_cov2 + beta12.2*occ_cov4
 
 
-occ_formulas <- c("~occ_cov1+occ_cov2",     #f1
-                  "~occ_cov3",              #f2
-                  "~occ_cov2 + occ_cov4")   #f12
+occ_formulas <- c("~1",     #f1
+                  "~1",              #f2
+                  "~occ_cov1")   #f12
 
 # Scenario 5: Covariate model with strong positive baseline interaction  ------
 
@@ -180,26 +191,31 @@ beta1.1 <- -0.2 # occ_cov1 effect
 beta1.2 <- 0.4 # occ_cov2 effect
 
 beta1 <- c(beta1.0, beta1.1, beta1.2)
-
+beta1 <- -0.4
 # First order natural parameter f2: log-odds of presence of sp2 
 ## beta2: baseline occupancy of sp2, assumed equal to sp1
 beta2.0 <-  -0.6 # (~35%)
 beta2.1 <- 0.5
 
 beta2 <- c(beta2.0, beta2.1)
+beta2 <- -.4
 # Second order natural parameter f12: log-odds of co-occurrene of sp1 & sp2
 ## beta12: baseline log-odds of co-occurrence
 beta12.0 <- 0.7  # 2.71 log-odds
 beta12.1 <- -0.3
-beta12.2 <- 0.2
+#beta12.2 <- 0.2
 
-beta12 <- c(beta12.0, beta12.1, beta12.2)
+beta12 <- c(beta12.0, beta12.1 )#, beta12.2)
 
+
+
+nsites <- c(30,50)
+nsim <- 10 
 
 scen5 <- MSOM_SimandFit.fun(beta1 = beta1 , beta2, beta12, 
-                            nsites = 3000, occ_formulas = occ_formulas,
+                            nsites = nsites, occ_formulas = occ_formulas,
                             det_formulas = det_formulas, nocc_covs = nocc_covs,
-                            nspecies = nspecies, seed = 1337, nsim = 2, J = 3)
+                            nspecies = nspecies, seed = 1337, nsim = nsim, J = 3)
 
 
 # Scenario 6: Covariate model with weak positive baseline interaction  ------
