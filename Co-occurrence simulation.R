@@ -22,7 +22,7 @@ source("MSOM_SimFun.R")
 
 ln.sites <- seq(3, 8, by = 0.5)
 nsites <- as.integer(exp(ln.sites))
-
+exp(ln.sites)
 
 # Number of visits (J): 3
 J <- 3
@@ -177,9 +177,11 @@ nocc_covs <- 1
 # f12 = beta12.0 + beta12.1*occ_cov2 + beta12.2*occ_cov4
 
 
-occ_formulas <- c("~1",     #f1
-                  "~1",              #f2
+occ_formulas <- c("~1",          #f1
+                  "~1",          #f2
                   "~occ_cov1")   #f12
+
+
 
 # Scenario 5: Covariate model with strong positive baseline interaction  ------
 
@@ -188,7 +190,6 @@ occ_formulas <- c("~1",     #f1
 ## beta1: baseline occupancy of sp1 
 beta1.0 <-  -0.4 # baseline prob(~40%)
 beta1.1 <- -0.2 # occ_cov1 effect 
-beta1.2 <- 0.4 # occ_cov2 effect
 
 beta1 <- c(beta1.0, beta1.1, beta1.2)
 beta1 <- -0.4

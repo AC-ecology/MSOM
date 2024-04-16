@@ -113,7 +113,7 @@ MSOM_SimandFit.fun <- function(beta1, beta2, beta12, nsites, nspecies = 2, J = 3
     occ_dms <- lapply(X = as.list(occ_formulas), 
                       function(x)model.matrix(as.formula(x), data = occ_covs))
     
-    
+    # CHANGE THIS TO BE ADAPTIVE FOR 2+ SPP :
     if(ncol(occ_dms[[1]]) != length(beta1)){
       stop("Error: Number of regression coefficients for linear predictor f1 must equal number of covariates in formula + 1")
       }

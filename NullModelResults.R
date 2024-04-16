@@ -45,6 +45,7 @@ State_sim1 <- scen1$State.params %>%
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
 
+
 ### Summary of Normal likelihood (LL)
 State_sim1.sum <- State_sim1 %>%
   group_by(n.sites, Parameter) %>%
@@ -1280,6 +1281,16 @@ cowplot::plot_grid(g1.pwr+theme(axis.title.x = element_blank(),
                                         axis.title.y = element_blank()), nrow = 2)
 
 
+###  Marginal probabilities
+#### Positive scenarios
+cowplot::plot_grid(g1.mar+theme(axis.title.x = element_blank(),
+                                axis.text.x = element_blank()),
+                   g2.mar, nrow = 2)
+
+#### Negative scenarios
+cowplot::plot_grid(g3.mar+theme(axis.title.x = element_blank(),
+                                axis.text.x = element_blank()),
+                   g4.mar, nrow = 2)
 
 
 
