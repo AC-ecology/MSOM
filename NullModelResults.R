@@ -12,8 +12,7 @@
 
 
 ## The colour-blind palette with black:
-cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
-                "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 
 library(readr)
 library(tidyverse)
@@ -998,7 +997,8 @@ full.scen4.con <- rbind(Cond.prob4.sum, Cond.prob4.pl.sum)
 
 
 ## The plot parade ----
-
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
+                "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 ### Scenario 1 -----
 #### Natural parameters
 
@@ -1016,7 +1016,7 @@ g1.nat <- ggplot(full.scen1.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 
 g1.pwr <- ggplot(full.scen1.nat%>%
                    filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   #facet_wrap(~Parameter)+
   theme_bw()+
@@ -1026,7 +1026,7 @@ g1.pwr <- ggplot(full.scen1.nat%>%
 
 #### General parameters
 g1.gen <- ggplot(full.scen1.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 15)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Gen.Par)+
   theme_bw()+
@@ -1044,17 +1044,17 @@ g1.mar <-  ggplot(full.scen1.mar, aes(x = log(n.sites), y = mu.p.bias, col = Lik
   facet_wrap(~Species)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 1 (Str +ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
+  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 ##### conditional probs
 g1.con <- ggplot(full.scen1.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 15)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Cond.prob)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 1 (Str +ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
+  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 
@@ -1077,7 +1077,7 @@ g2.nat <- ggplot(full.scen2.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 
 g2.pwr <- ggplot(full.scen2.nat%>%
                    filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   #facet_wrap(~Parameter)+
   theme_bw()+
@@ -1087,7 +1087,7 @@ g2.pwr <- ggplot(full.scen2.nat%>%
 
 #### General parameters
 g2.gen <- ggplot(full.scen2.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 15)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Gen.Par)+
   theme_bw()+
@@ -1105,17 +1105,17 @@ g2.mar <-  ggplot(full.scen2.mar, aes(x = log(n.sites), y = mu.p.bias, col = Lik
   facet_wrap(~Species)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 2 (Weak +ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
+  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 ##### conditional probs
 g2.con <- ggplot(full.scen2.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 15)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Cond.prob)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 2 (Weak +ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
+  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 
@@ -1129,7 +1129,7 @@ g3.nat <- ggplot(full.scen3.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
   facet_wrap(~Parameter)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 3 (Str -ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-4.5, 4.5)+
+  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-5.5, 5.5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 
@@ -1137,7 +1137,7 @@ g3.nat <- ggplot(full.scen3.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 
 g3.pwr <- ggplot(full.scen3.nat%>%
                    filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   #facet_wrap(~Parameter)+
   theme_bw()+
@@ -1147,7 +1147,7 @@ g3.pwr <- ggplot(full.scen3.nat%>%
 
 #### General parameters
 g3.gen <- ggplot(full.scen3.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 15)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Gen.Par)+
   theme_bw()+
@@ -1165,17 +1165,17 @@ g3.mar <-  ggplot(full.scen3.mar, aes(x = log(n.sites), y = mu.p.bias, col = Lik
   facet_wrap(~Species)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 3 (Str -ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
+  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 ##### conditional probs
 g3.con <- ggplot(full.scen3.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 15)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Cond.prob)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 3 (Str -ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
+  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 
@@ -1190,7 +1190,7 @@ g4.nat <- ggplot(full.scen4.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
   facet_wrap(~Parameter)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 4 (Weak -ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-4.5, 4.5)+
+  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-5.5, 5.5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 
@@ -1198,7 +1198,7 @@ g4.nat <- ggplot(full.scen4.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 
 g4.pwr <- ggplot(full.scen4.nat%>%
                    filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   #facet_wrap(~Parameter)+
   theme_bw()+
@@ -1208,7 +1208,7 @@ g4.pwr <- ggplot(full.scen4.nat%>%
 
 #### General parameters
 g4.gen <- ggplot(full.scen4.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 15)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Gen.Par)+
   theme_bw()+
@@ -1226,17 +1226,17 @@ g4.mar <-  ggplot(full.scen4.mar, aes(x = log(n.sites), y = mu.p.bias, col = Lik
   facet_wrap(~Species)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 4 (Weak -ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
+  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 ##### conditional probs
 g4.con <- ggplot(full.scen4.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+  geom_point(size = 2.5, pch = 15)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Cond.prob)+
   theme_bw()+
   labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 4 (Weak -ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
+  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 
@@ -1292,6 +1292,18 @@ cowplot::plot_grid(g3.mar+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank()),
                    g4.mar, nrow = 2)
 
+
+
+###  Conditional probabilities
+#### Positive scenarios
+cowplot::plot_grid(g1.con+theme(axis.title.x = element_blank(),
+                                axis.text.x = element_blank()),
+                   g2.con, nrow = 2)
+
+#### Negative scenarios
+cowplot::plot_grid(g3.con+theme(axis.title.x = element_blank(),
+                                axis.text.x = element_blank()),
+                   g4.con, nrow = 2)
 
 
 
