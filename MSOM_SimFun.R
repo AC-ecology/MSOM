@@ -39,6 +39,44 @@ psi.fun <- function(f, nspecies = 2) {
 
 # psi.fun(f = cbind(beta1, beta2, beta12))
 
+# Function to apply CV and penalty to 
+
+
+crv.Clipp21 <- function(l, data, M = 5){
+  seed = seed
+  # number of sites
+  n <- nrow(data@y)
+  
+  # index of where to start and stop vector of site indices
+  s <- seq(1, by = n / M, length.out = M)  # starting index
+  e <- seq(n / M, by = n / M, length.out = M)  # ending index
+  
+  # initializing vector of cross validation values
+  cv <- numeric(M)
+  
+  for(i in 1:M){  # looping through all partitions
+    
+    # fitting to withheld data
+    # error handling so simulations don't stop with error
+    err_tmp <- class(try(
+      fit <- occuMulti(detformulas = det_formulas,
+                       stateformulas = occ_formulas,
+                       data = data[(1:n)[-(s[i]:e[i])]],
+                       penalty = l, se = T, boot = 100))) == 'try-error'
+    
+    
+    # likelihood of withheld data
+    if(err_tmp){
+      cv[i] <- NA
+    } else{
+      cv[i] <- sum(unmarked:::occuMultiLogLik(fit, data[s[i]:e[i]]))
+    }
+  }
+  
+  return(sum(cv))
+  
+}
+
 
 # Function to simulate data and fit a 2-species 
 # multi-species occupancy model (MSOM) from Rota et al. (2016)
@@ -83,13 +121,15 @@ psi.fun <- function(f, nspecies = 2) {
 # time.ellapsed: diff.time object that represents how long the scenario took to simulate
 
 MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
-                               p_true= c(0.5, 0.5) , ndet_covs = 2,
+                               p_true= c(0.5, 0.5) ,
                                occ_formulas = NULL,
                                det_formulas = NULL, nsim =100, seed = NULL) {
   
   if(!is.list(beta) | length(beta) != (nspecies+nspecies*(nspecies-1)/2)){ 
     stop("Error: beta should be a list with length = nspecies+nspecies*(nspecies-1)/2")
-    }
+  }
+  
+  ndet_covs = nspecies
   if(!is.null(seed)) set.seed(seed)
   init.time <- Sys.time()
   require(unmarked, quietly = TRUE)
@@ -134,12 +174,12 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
         
         f <- cbind(f,occ_dms[[p]]%*%beta[[p]] )
         params <- c(params, paste0(nat.params[p], ".", seq(0,length(beta[[p]])-1)))
-        if(p > (nspecies) && beta[[p]] == 0){
+        if(p > (nspecies) && all(beta[[p]] == 0)){
           occ_formulas[p] <- '0'
           }
       }
       if(p == n.nat.params & nspecies > 2){
-        f <-  cbind(f, matrix(rep(0, N*(2^nspecies-1 - n.nat.params))))
+        f <-  cbind(f, matrix(rep(0, N*(2^nspecies-1 - n.nat.params)), ncol = (2^nspecies-1 - n.nat.params)))
       }
     }
     if(any(occ_formulas == "0")){
@@ -159,8 +199,8 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
     psi <- psi/rowSums(psi)
     
     # psi <- psi.fun(f = f, nspecies = nspecies) # not worth within loop
-    
-    for(s in 1:nsim){
+    s = 1
+    while(s <= nsim){
       #True state
       ztruth <- matrix(NA,nrow=N,ncol=nspecies)
       for (i in 1:N){
@@ -183,18 +223,52 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
           }
         }
       }
+      
+      
       names(y) <- paste0('sp', 1:nspecies)
       data <- unmarkedFrameOccuMulti(y=y,siteCovs=occ_covs,obsCovs=det_covs)
       
+      print(paste0("SIMULATION ITERATION: ", s))
       # Without penalty
-      fit <- occuMulti(det_formulas,occ_formulas,data, maxOrder = 2)
+      fit <-try(occuMulti(det_formulas,occ_formulas,data, maxOrder = 2))
+      if(class(fit) %in% "try-error") next
       fit_sum <-summary(fit)
-      mod.conv <- ifelse(fit@opt$convergence==0, 1, 0)
       
-      # with penalty
-      fit_pl <- optimizePenalty(fit)
-      pen.val <- as.numeric(as.character(fit_pl@call['penalty']))
+      mod.conv <- ifelse(fit@opt$convergence==0 , 1, 0)
+  
+      
+      
+      # with penalty (if boundary estimates run CV code from Clipp 2021)
+      fit_pl <- try(optimizePenalty(fit))
+      
+      if("try-error" %in% class(fit_pl)){
+        
+        lam <- c(0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12)
+        
+        fit.ll <- numeric(length(lam))
+        
+        for(l in 1:length(lam)){
+          fit.ll[l] <- tryCatch(crv.Clipp21(l = lam[l], data = data, M = 5), 
+                                error = function(e) rep(NA, 1))
+          if("try-error" %in% class(fit.ll[l])) next
+        }
+        
+        if("try-error" %in% class(fit.ll[l])) next
+        
+        if(!all(is.na(fit.ll))){
+          pen.val <- lam[which(fit.ll == max(fit.ll, na.rm = T))]
+        } else{next}
+        fit_pl <- occuMulti(det_formulas,occ_formulas,data, 
+                            maxOrder = 2, penalty = pen.val, boot = 100)
+        
+        pen.est <- "CrossV"
+      } else{
+        # fit_pl <- optimizePenalty(fit)
+        pen.val <- as.numeric(as.character(fit_pl@call['penalty']))
+        pen.est <- "optPen"
+      }
       fit_pl.sum <- summary(fit_pl)
+      
       mod.conv_pl <- ifelse(fit_pl@opt$convergence==0, 1, 0)
       
       
@@ -222,6 +296,7 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
         det_df.pl$conv <- mod.conv_pl
         det_df.pl$og_param.val <- qlogis(p_true)
         det_df.pl$lambda <- pen.val
+        det_df.pl$pen.est <- pen.est
         
         ## State (occ) parameters and data frames
         state_df.pl <- fit_pl.sum$state
@@ -230,6 +305,7 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
         state_df.pl$conv <- mod.conv_pl
         state_df.pl$og_param.val <- og.param.val
         state_df.pl$lambda <- pen.val
+        state_df.pl$pen.est <- pen.est
         
       } else {
         #  Without penalisation
@@ -260,7 +336,7 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
         det_df.pl1$conv <- mod.conv_pl
         det_df.pl1$og_param.val <- qlogis(p_true)
         det_df.pl1$lambda <- pen.val
-        
+        det_df.pl1$pen.est <- pen.est
         ## State (occ) parameters and data frames
         state_df.pl1 <- fit_pl.sum$state
         state_df.pl1$Parameter <-params
@@ -268,11 +344,13 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
         state_df.pl1$conv <- mod.conv_pl
         state_df.pl1$og_param.val <- og.param.val
         state_df.pl1$lambda <- pen.val
+        state_df.pl1$pen.est <- pen.est
         
         det_df.pl <- rbind(det_df.pl, det_df.pl1)
         state_df.pl <- rbind(state_df.pl, state_df.pl1)
         
       }
+      s <- s + 1
     } #s
     det_df$n.sites <- N
     state_df$n.sites <- N
