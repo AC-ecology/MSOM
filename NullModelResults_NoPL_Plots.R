@@ -1002,7 +1002,7 @@ full.scen4.con <- rbind(Cond.prob4.sum, Cond.prob4.pl.sum)
 full.scen.nat <- rbind(State_sim1.sum, State_sim2.sum, State_sim3.sum, State_sim4.sum)
 full.scen.nat$Scenario <- rep(paste0("Scenario", 1:4), each = nrow(State_sim3.sum))
 full.scen.nat$IntStrength <- rep(c("Strong", "Weak", "Strong", "Weak"), each = nrow(State_sim3.sum))
-full.scen.nat$IntType <- rep(c("Pos", "Neg"), each = nrow(State_sim3.sum)*2)
+full.scen.nat$IntType <- rep(c("Positive interaction ", "Negative interaction"), each = nrow(State_sim3.sum)*2)
 full.scen.nat$NatPam <- rep(c("f1", "f12", "f2"),nrow( full.scen.nat)/3)
 full.scen.nat$CoeffReg <- rep(c("alpha0", "beta0", "gamma0"), nrow(full.scen.nat)/3)
 
@@ -1012,7 +1012,7 @@ cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
 
 ### All Scenarios -----
 
-p.full.scen.v1 <- ggplot(full.scen.nat, aes(x = log(n.sites), y = mu.p.bias,
+p.full.scen.v1 <- ggplot(full.scen.nat, aes(x = n.sites, y = mu.p.bias,
                                          col = IntStrength))+
   geom_hline(yintercept = 0, linetype = "dashed", col = "black")+
   geom_line(aes(col = IntStrength))+
@@ -1020,12 +1020,10 @@ p.full.scen.v1 <- ggplot(full.scen.nat, aes(x = log(n.sites), y = mu.p.bias,
              aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
   scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   facet_grid(IntType~CoeffReg)+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias (RB)", col = "Likelihood")+
+  labs(x = "Number of Sites", y = "Mean Relative Bias (RB)", col = "Interaction strength")+
   scale_colour_manual(values= c(cbbPalette[2], cbbPalette[3]))+
   coord_cartesian(ylim =  c(-2.5, 2.5))+
   theme_bw()
-
-?geom_rect
 
 p.full.scen.v2 <- ggplot(full.scen.nat, aes(x = factor(n.sites), y = mu.p.bias,
                                             col = IntStrength, group = IntStrength))+
@@ -1035,7 +1033,7 @@ p.full.scen.v2 <- ggplot(full.scen.nat, aes(x = factor(n.sites), y = mu.p.bias,
              aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
   scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   facet_grid(IntType~factor(NatPam, levels = c("f1", "f2", "f12")))+
-  labs(x = "Number of Sites", y = "Mean Relative Bias (RB)", col = "Strength")+
+  labs(x = "Number of Sites", y = "Mean Relative Bias (RB)", col = "Interaction strength")+
   scale_colour_manual(values= c(cbbPalette[2], cbbPalette[3]))+
   coord_cartesian(ylim =  c(-2.5, 2.5))+
   theme_bw()+
@@ -1048,7 +1046,7 @@ p.full.sce.pwr <- ggplot(full.scen.nat %>%
   geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")+
   geom_line()+
   geom_point(size = 2.5)+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
+  scale_alpha_manual(values = c(1, 0.3))+
   facet_grid(~IntType)+
   labs(x = "Number of Sites", y = "Power", col = "Strength")+
   scale_colour_manual(values= c(cbbPalette[2], cbbPalette[3]))+ylim(0,1)+
@@ -1396,25 +1394,25 @@ g4.con <- ggplot(full.scen4.con, aes(x = log(n.sites), y = mu.p.bias,
 ## Bias plots ----
 
 ### Natural parameters 
-#### Positive scenarios
+#### Positive interaction itive scenarios
 cowplot::plot_grid(g1.nat+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank())+
                      guides(alpha = "none"),
                    g2.nat+guides(col = "none"), nrow = 2)
 
-#### Negative scenarios
+#### Negative interactionative scenarios
 cowplot::plot_grid(g3.nat+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank()),
                    g4.nat, nrow = 2)
 
 
 ### General parameters 
-#### Positive scenarios
+#### Positive interaction itive scenarios
 cowplot::plot_grid(g1.gen+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank()),
                    g2.gen, nrow = 2)
 
-#### Negative scenarios
+#### Negative interactionative scenarios
 cowplot::plot_grid(g3.gen+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank()),
                    g4.gen, nrow = 2)
@@ -1423,22 +1421,22 @@ cowplot::plot_grid(g3.gen+theme(axis.title.x = element_blank(),
 
 cowplot::plot_grid(g1.pwr+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank(),
-                                legend.position = "none"),
+                                legend.Positive interaction ition = "none"),
                    g2.pwr+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank(),
                                 axis.text.y = element_blank(),
                                 axis.title.y = element_blank()),
-                   g3.pwr+theme(legend.position = "none"), g4.pwr+theme(axis.text.y = element_blank(),
+                   g3.pwr+theme(legend.Positive interaction ition = "none"), g4.pwr+theme(axis.text.y = element_blank(),
                                         axis.title.y = element_blank()), nrow = 2)
 
 
 ###  Marginal probabilities
-#### Positive scenarios
+#### Positive interaction itive scenarios
 cowplot::plot_grid(g1.mar+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank()),
                    g2.mar, nrow = 2)
 
-#### Negative scenarios
+#### Negative interactionative scenarios
 cowplot::plot_grid(g3.mar+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank()),
                    g4.mar, nrow = 2)
@@ -1446,12 +1444,12 @@ cowplot::plot_grid(g3.mar+theme(axis.title.x = element_blank(),
 
 
 ###  Conditional probabilities
-#### Positive scenarios
+#### Positive interaction itive scenarios
 cowplot::plot_grid(g1.con+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank()),
                    g2.con, nrow = 2)
 
-#### Negative scenarios
+#### Negative interactionative scenarios
 cowplot::plot_grid(g3.con+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank()),
                    g4.con, nrow = 2)
