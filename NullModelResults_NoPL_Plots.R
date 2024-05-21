@@ -1,6 +1,6 @@
-##############################################
-##### Covariate model results processing #####
-##############################################
+########################################
+##### Nul model results processing #####
+########################################
 
 # Workflow:
 ## 1. Load result object
@@ -11,11 +11,14 @@
 ## 6. Plot with ggplot, faceting for parameter
 
 
+## The colour-blind palette with black:
+
 
 library(readr)
 library(tidyverse)
 
 ### Shared features:
+
 ln.sites <- seq(3, 8, by = 0.5)
 nsites <- as.integer(exp(ln.sites))
 
@@ -23,160 +26,49 @@ nsim <- 100
 
 nspecies <- 2
 
-# function for retreiving general params
-gen.param.fun <- function(beta, nspecies = 2, 
-                          occ_formulas = NULL, occ_covs = NULL, seed = NULL){
-  if(!is.null(seed)) set.seed(seed)
-  if(is.null(occ_formulas)){occ_formulas <- rep("~1", nspecies)} else{
-    nocc_covs <- max(as.numeric(gsub(pattern = "[a-z]", "",
-                                     str_extract(occ_formulas, "cov[0-9]"))), na.rm = T)
-    
-  }
- 
-  if(is.null(occ_covs)) {
-    occ_covs <- data.frame(matrix(rep(seq(-1, 1, 
-                                          length.out  = 100), nocc_covs),
-                                  ncol = nocc_covs))
-    names(occ_covs) <- paste('occ_cov',1:nocc_covs,sep='')
-  } 
-  names(occ_covs) <- paste('occ_cov',1:ncol(occ_covs),sep='')
-  n.nat.params <- nspecies + nspecies*(nspecies-1)/2
-  nat.params <- paste0("f", c(1:nspecies, 
-                              apply(combn(1:nspecies, 2),
-                                    2,paste0, collapse = "" )))
-  
-  
-  occ_dms <- lapply(X = as.list(occ_formulas), 
-                    function(x)model.matrix(as.formula(x), data = occ_covs))
-  
-  for(p in 1:n.nat.params){
-    if(ncol(occ_dms[[p]]) != length(beta[[p]])){
-      stop(paste0("Error: Number of regression coefficients for linear predictor ",
-                  nat.params[p]," must equal number of covariates in formula + 1"))
-    }
-    
-    if(p == 1){
-      f <- occ_dms[[p]]%*%beta[[p]]
-      params <- paste0(nat.params[p], ".", seq(0,length(beta[[p]])-1))
-    } else{
-      
-      f <- cbind(f,occ_dms[[p]]%*%beta[[p]] )
-      params <- c(params, paste0(nat.params[p], ".", seq(0,length(beta[[p]])-1)))
-      if(p > (nspecies) && all(beta[[p]] == 0)){
-        occ_formulas[p] <- '0'
-      }
-    }
-    if(p == n.nat.params & nspecies > 2){
-      f <-  cbind(f, matrix(rep(0, N*(2^nspecies-1 - n.nat.params)), ncol = (2^nspecies-1 - n.nat.params)))
-    }
-  }
-  if(any(occ_formulas == "0")){
-    params <- params[-which(occ_formulas == "0")]
-    og.param.val <- unlist(beta[-which(occ_formulas == "0")])
-  } else{
-    og.param.val <- unlist(beta)
-  }
-  
-  
-  #f <- cbind(f1,f2,f12)
-  z <- expand.grid(rep(list(1:0),nspecies))[,nspecies:1]
-  colnames(z) <- paste('sp',1:nspecies,sep='')
-  dm <- model.matrix(as.formula(paste0("~.^",nspecies,"-1")),z)
-  
-  psi <- exp(f %*% t(dm))
-  psi <- psi/rowSums(psi)
-  
-  colnames(psi) <- apply(z, 1, function(x) paste0(x, collapse = ""))
-  return(psi)
-}
+source("MSOM_SimFun.R")
 
 # Scenario 1 ----
 
-beta1 <- -0.4
-# First order natural parameter f2: log-odds of presence of sp2 
-## beta2: baseline occupancy of sp2, assumed equal to sp1
-
-beta2 <- -0.4
-# Second order natural parameter f12: log-odds of co-occurrene of sp1 & sp2
-## beta12: baseline log-odds of co-occurrence
-beta12.0 <- -0.6  
-beta12.1 <- 0.8
-
-beta12 <- c(beta12.0, beta12.1)#, beta12.2)
-
-beta = list(beta1, beta2, beta12)
-
-# General formulas to be:
-# f1 = beta1.0 + beta1.1*occ_cov1 + beta1.2*occ_cov2
-# f2 = beta2.0 + beta2.1*occ_cov2
-# f12 = beta12.0 + beta12.1*occ_cov2 + beta12.2*occ_cov4
-
-
-occ_formulas <- c("~1",          #f1
-                  "~1",          #f2
-                  "~occ_cov1")   #f12
-
 ## Read object
-scen1 <- scen.cov1 <- read_rds("Results/Scenario1_2spCovariateseed1337_simResults_v2.rds")
+scen1 <- read_rds("Results/scen1_seed1337_simResults2.rds")
 
 
 ## Normal likelihood 
-State_simcov1 <- scen.cov1$State.params %>%
-  group_by(n.sites, niter) %>%
-  mutate(conv = ifelse(any(is.nan(SE)), 0, conv)) %>%
-  ungroup %>%
+State_sim1 <- scen1$State.params %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
-         #prop.bias = abs((Estimate-og_pam)/og_pam))
+         #prop.bias = abs((Estimate-og_pam)/og_pam),
          CV = SE/abs(Estimate), 
          Covered = ifelse(og_param.val >= Estimate - 1.96*SE & og_param.val <=Estimate+1.96*SE, 1, 0),
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
 
-scen.1.conv <-State_simcov1 %>%
-  group_by(n.sites, Parameter) %>%
-  summarise(Conv.rate = mean(conv)) %>%
-  ungroup()
 
 ### Summary of Normal likelihood (LL)
-State_simcov1.sum <- State_simcov1 %>%
+State_sim1.sum <- State_sim1 %>%
   group_by(n.sites, Parameter) %>%
-  filter(conv == 1) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias), mu.CV = mean(CV, na.rm = T),
+            mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
-            CR = mean(Covered, na.rm = T),                               # Coverage rate
-            PWR = mean(below.alpha, na.rm = T),                          # Mean type I error rate
+            CR = mean(Covered),                               # Coverage rate
+            PWR = mean(below.alpha),                          # Mean type I error rate
             Conv.rate = mean(conv),                           # Mean convergence rate
-            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
 
 
-
-
 #### General parameters (psi11, psi10, psi01, psi00)
-occ_covs = data.frame(occ_cov1 = 1)
 
 
-
-GenParam_sim1 <- State_simcov1 %>%
-  filter(conv == 1) %>%
+GenParam_sim1 <- State_sim1 %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
-                                                occ_formulas = occ_formulas,
-                                                occ_covs = occ_covs))),
-            og.psi = as.vector(t(gen.param.fun(beta = beta, 
-                                               occ_formulas = occ_formulas,
-                                               occ_covs = occ_covs))),
-            Gen.Par = colnames(gen.param.fun(beta = beta, 
-                                             occ_formulas = occ_formulas,
-                                             occ_covs = occ_covs))) %>%
-  ungroup
+  summarise(psi.est = as.vector(t(psi.fun(f = cbind(t(Estimate))))),
+            og.psi = as.vector(t(psi.fun(f = cbind(t(og_param.val))))),
+            Gen.Par = colnames(psi.fun(f = cbind(t(Estimate))))) %>%
+  ungroup()
 
 
 GenParam_sim1 <-  GenParam_sim1 %>%
@@ -192,7 +84,6 @@ GenParam_sim1.sum <- GenParam_sim1 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
-            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
@@ -239,7 +130,7 @@ Marg.prob1.sum <- Marg.prob1 %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
-            bias.uci = mu.bias + 1.96*sd.bias,  ndatasets = n(),               # Upper bias CI
+            bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             Lik = "LL") %>% 
   ungroup()
 
@@ -250,7 +141,7 @@ Cond.prob1.sum <- Cond.prob1 %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
-            bias.uci = mu.bias + 1.96*sd.bias,    ndatasets = n(),             # Upper bias CI
+            bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             Lik = "LL") %>% 
   ungroup()
 
@@ -258,10 +149,7 @@ Cond.prob1.sum <- Cond.prob1 %>%
 
 ## Penalised likelihood 
 
-State_simcov1.pl <- scen1$State.params.pl %>%
-  group_by(n.sites, niter) %>%
-  mutate(conv = ifelse(any(is.nan(SE)), 0, conv)) %>%
-  ungroup %>%
+State_sim1.pl <- scen1$State.params.pl %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
@@ -271,8 +159,7 @@ State_simcov1.pl <- scen1$State.params.pl %>%
   ungroup()
 
 ### Summary of Normal likelihood (LL)
-State_simcov1.pl.sum <- State_simcov1.pl %>%
-  filter(conv == 1) %>%
+State_sim1.pl.sum <- State_sim1.pl %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
@@ -280,7 +167,7 @@ State_simcov1.pl.sum <- State_simcov1.pl %>%
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
             PWR = mean(below.alpha),                          # Mean type I error rate
-            Conv.rate = mean(conv),  ndatasets = n(),                    # Mean convergence rate
+            Conv.rate = mean(conv),                           # Mean convergence rate
             Lik = "PL") %>% 
   ungroup()
 
@@ -289,20 +176,11 @@ State_simcov1.pl.sum <- State_simcov1.pl %>%
 #### General parameters (psi11, psi10, psi01, psi00)
 
 
-GenParam_sim1.pl <- State_simcov1.pl %>%
-  filter(conv == 1) %>%
+GenParam_sim1.pl <- State_sim1.pl %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
-                                                occ_formulas = occ_formulas,
-                                                occ_covs = occ_covs))),
-            og.psi = as.vector(t(gen.param.fun(beta = beta, 
-                                               occ_formulas = occ_formulas,
-                                               occ_covs = occ_covs))),
-            Gen.Par = colnames(gen.param.fun(beta = beta, 
-                                             occ_formulas = occ_formulas,
-                                             occ_covs = occ_covs))) %>%
+  summarise(psi.est = as.vector(t(psi.fun(f = cbind(t(Estimate))))),
+            og.psi = as.vector(t(psi.fun(f = cbind(t(og_param.val))))),
+            Gen.Par = colnames(psi.fun(f = cbind(t(Estimate))))) %>%
   ungroup()
 
 
@@ -319,9 +197,9 @@ GenParam_sim1.pl.sum <- GenParam_sim1.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
-            Lik = "PL",  ndatasets = n()) %>% 
+            Lik = "PL") %>% 
   ungroup()
-  
+
 
 #### Derived Parameters 
 
@@ -363,7 +241,7 @@ Marg.prob1.pl.sum <- Marg.prob1.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
-            Lik = "PL",  ndatasets = n()) %>% 
+            Lik = "PL") %>% 
   ungroup()
 
 
@@ -374,14 +252,14 @@ Cond.prob1.pl.sum <- Cond.prob1.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
-            Lik = "PL",  ndatasets = n()) %>% 
+            Lik = "PL") %>% 
   ungroup()
 
 
 ###### Combining LL and PL into one for plotting
 
 ## Natural parameters
-full.scen1.nat <- rbind(State_simcov1.sum, State_simcov1.pl.sum)
+full.scen1.nat <- rbind(State_sim1.sum, State_sim1.pl.sum)
 
 ## General parameters
 
@@ -395,49 +273,14 @@ full.scen1.con <- rbind(Cond.prob1.sum, Cond.prob1.pl.sum)
 
 # Scenario 2 ----
 
-# Parameter definition:
-# First order natural parameter f1: log-odds of presence of sp1 
-## beta1: baseline occupancy of sp1 
-beta1.0 <-  -0.2 # baseline prob(~40%)
-beta1.1 <- 0.3 # occ_cov1 effect 
-
-beta1 <- c(beta1.0, beta1.1)
-
-# First order natural parameter f2: log-odds of presence of sp2 
-## beta2: baseline occupancy of sp2, assumed equal to sp1
-beta2.0 <-  -0.6 # (~35%)
-beta2.1 <- 0.5
-
-beta2 <- c(beta2.0, beta2.1)
-# Second order natural parameter f12: log-odds of co-occurrene of sp1 & sp2
-
-beta12.0 <- -0.6  
-beta12.1 <- 0.8
-
-beta12 <- c(beta12.0, beta12.1)
-
-
-beta = list(beta1, beta2, beta12)
-
-occ_formulas <- c("~occ_cov1",          #f1
-                  "~occ_cov2",          #f2
-                  "~occ_cov3")   #f12
-
-
-occ_covs = data.frame(occ_cov1 = 1,
-                      occ_cov2 = 1,
-                      occ_cov3 = 1)
 ## Read object
-scen2 <- read_rds("Results/Scenario2_2spNCovariate3seed1337_simResults_v2.rds")
+scen2 <- read_rds("Results/scen2_seed1337_simResults2.rds")
 
 
 
 
 ## Normal likelihood 
 State_sim2 <- scen2$State.params %>%
-  group_by(n.sites, niter) %>%
-  mutate(conv = ifelse(any(is.nan(SE)), 0, conv)) %>%
-  ungroup %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
@@ -448,10 +291,9 @@ State_sim2 <- scen2$State.params %>%
 
 ### Summary of Normal likelihood (LL)
 State_sim2.sum <- State_sim2 %>%
-  filter(conv == 1) %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
+            mu.p.bias = mean(prop.bias), mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -462,22 +304,16 @@ State_sim2.sum <- State_sim2 %>%
 
 
 
+
+
 #### General parameters (psi11, psi10, psi01, psi00)
 
 
 GenParam_sim2 <- State_sim2 %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1:2],
-                                                            Estimate[3:4],
-                                                            Estimate[5:6]), 
-                                                occ_formulas = occ_formulas,
-                                                occ_covs = occ_covs))),
-            og.psi = as.vector(t(gen.param.fun(beta = beta, 
-                                               occ_formulas = occ_formulas,
-                                               occ_covs = occ_covs))),
-            Gen.Par = colnames(gen.param.fun(beta = beta, 
-                                             occ_formulas = occ_formulas,
-                                             occ_covs = occ_covs))) %>%
+  summarise(psi.est = as.vector(t(psi.fun(f = cbind(t(Estimate))))),
+            og.psi = as.vector(t(psi.fun(f = cbind(t(og_param.val))))),
+            Gen.Par = colnames(psi.fun(f = cbind(t(Estimate))))) %>%
   ungroup()
 
 
@@ -569,7 +405,7 @@ State_sim2.pl <- scen2$State.params.pl %>%
 State_sim2.pl.sum <- State_sim2.pl %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
+            mu.p.bias = mean(prop.bias), mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -585,17 +421,9 @@ State_sim2.pl.sum <- State_sim2.pl %>%
 
 GenParam_sim2.pl <- State_sim2.pl %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1:2],
-                                                            Estimate[3:4],
-                                                            Estimate[5:6]), 
-                                                occ_formulas = occ_formulas,
-                                                occ_covs = occ_covs))),
-            og.psi = as.vector(t(gen.param.fun(beta = beta, 
-                                               occ_formulas = occ_formulas,
-                                               occ_covs = occ_covs))),
-            Gen.Par = colnames(gen.param.fun(beta = beta, 
-                                             occ_formulas = occ_formulas,
-                                             occ_covs = occ_covs))) %>%
+  summarise(psi.est = as.vector(t(psi.fun(f = cbind(t(Estimate))))),
+            og.psi = as.vector(t(psi.fun(f = cbind(t(og_param.val))))),
+            Gen.Par = colnames(psi.fun(f = cbind(t(Estimate))))) %>%
   ungroup()
 
 
@@ -690,39 +518,8 @@ full.scen2.con <- rbind(Cond.prob2.sum, Cond.prob2.pl.sum)
 
 # Scenario 3 ----
 
-# Parameter definition:
-# First order natural parameter f1: log-odds of presence of sp1 
-## beta1: baseline occupancy of sp1 
-beta1.0 <-  -0.2 # baseline prob(~40%)
-beta1.1 <- 0.4 # occ_cov1 effect 
-
-beta1 <- c(beta1.0, beta1.1)
-
-# First order natural parameter f2: log-odds of presence of sp2 
-## beta2: baseline occupancy of sp2, assumed equal to sp1
-beta2.0 <-  -0.4 # (~35%)
-beta2.1 <- 0.6
-
-beta2 <- c(beta2.0, beta2.1)
-# Second order natural parameter f12: log-odds of co-occurrene of sp1 & sp2
-
-beta12.0 <- -0.6  
-beta12.1 <- 0.8
-beta12.2 <- -0.5
-
-beta12 <- c(beta12.0, beta12.1, beta12.2)
-
-
-beta = list(beta1, beta2, beta12)
-
-## Formulas and occupancy formulas
-
-
-occ_formulas <- c("~occ_cov1",          #f1
-                  "~occ_cov2",          #f2
-                  "~occ_cov3 + occ_cov4")   #f12
 ## Read object
-scen3 <- read_rds("Results/Scenario3_2spNCovariate4_2intseed1337_simResults_v2.rds")
+scen3 <- read_rds("Results/scen3_seed1337_simResults2.rds")
 
 
 
@@ -757,17 +554,9 @@ State_sim3.sum <- State_sim3 %>%
 
 GenParam_sim3 <- State_sim3 %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
-                                                occ_formulas = occ_formulas,
-                                                occ_covs = occ_covs))),
-            og.psi = as.vector(t(gen.param.fun(beta = beta, 
-                                               occ_formulas = occ_formulas,
-                                               occ_covs = occ_covs))),
-            Gen.Par = colnames(gen.param.fun(beta = beta, 
-                                             occ_formulas = occ_formulas,
-                                             occ_covs = occ_covs))) %>%
+  summarise(psi.est = as.vector(t(psi.fun(f = cbind(t(Estimate))))),
+            og.psi = as.vector(t(psi.fun(f = cbind(t(og_param.val))))),
+            Gen.Par = colnames(psi.fun(f = cbind(t(Estimate))))) %>%
   ungroup()
 
 
@@ -874,17 +663,9 @@ State_sim3.pl.sum <- State_sim3.pl %>%
 
 GenParam_sim3.pl <- State_sim3.pl %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
-                                                occ_formulas = occ_formulas,
-                                                occ_covs = occ_covs))),
-            og.psi = as.vector(t(gen.param.fun(beta = beta, 
-                                               occ_formulas = occ_formulas,
-                                               occ_covs = occ_covs))),
-            Gen.Par = colnames(gen.param.fun(beta = beta, 
-                                             occ_formulas = occ_formulas,
-                                             occ_covs = occ_covs))) %>%
+  summarise(psi.est = as.vector(t(psi.fun(f = cbind(t(Estimate))))),
+            og.psi = as.vector(t(psi.fun(f = cbind(t(og_param.val))))),
+            Gen.Par = colnames(psi.fun(f = cbind(t(Estimate))))) %>%
   ungroup()
 
 
@@ -979,37 +760,8 @@ full.scen3.con <- rbind(Cond.prob3.sum, Cond.prob3.pl.sum)
 # Scenario 4 ----
 
 
-# Parameter definition:
-# First order natural parameter f1: log-odds of presence of sp1 
-## beta1: baseline occupancy of sp1 
-beta1.0 <-  -0.2 # baseline prob(~40%)
-beta1.1 <- 0.4 # occ_cov1 effect 
-beta1.2 <- -0.3 # 
-
-beta1 <- c(beta1.0, beta1.1, beta1.2)
-
-# First order natural parameter f2: log-odds of presence of sp2 
-## beta2: baseline occupancy of sp2, assumed equal to sp1
-beta2.0 <-  -0.4 # (~35%)
-beta2.1 <- 0.6
-
-beta2 <- c(beta2.0, beta2.1)
-# Second order natural parameter f12: log-odds of co-occurrene of sp1 & sp2
-
-beta12.0 <- -0.6  
-beta12.1 <- 0.8
-beta12.2 <- -0.5
-
-beta12 <- c(beta12.0, beta12.1, beta12.2)
-
-beta = list(beta1, beta2, beta12)
-
-
-occ_formulas <- c("~occ_cov1 + occ_cov4",          #f1
-                  "~occ_cov2",          #f2
-                  "~occ_cov3 + occ_cov4")   #f12
 ## Read object
-scen4 <- read_rds("Results/Scenario4_2spNCovariate4_SharedCovsseed1337_simResults_v2.rds")
+scen4 <- read_rds("Results/scen4_seed1337_simResults2.rds")
 
 
 
@@ -1044,17 +796,9 @@ State_sim4.sum <- State_sim4 %>%
 
 GenParam_sim4 <- State_sim4 %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
-                                                occ_formulas = occ_formulas,
-                                                occ_covs = occ_covs))),
-            og.psi = as.vector(t(gen.param.fun(beta = beta, 
-                                               occ_formulas = occ_formulas,
-                                               occ_covs = occ_covs))),
-            Gen.Par = colnames(gen.param.fun(beta = beta, 
-                                             occ_formulas = occ_formulas,
-                                             occ_covs = occ_covs))) %>%
+  summarise(psi.est = as.vector(t(psi.fun(f = cbind(t(Estimate))))),
+            og.psi = as.vector(t(psi.fun(f = cbind(t(og_param.val))))),
+            Gen.Par = colnames(psi.fun(f = cbind(t(Estimate))))) %>%
   ungroup()
 
 
@@ -1159,17 +903,9 @@ State_sim4.pl.sum <- State_sim4.pl %>%
 
 GenParam_sim4.pl <- State_sim4.pl %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
-                                                occ_formulas = occ_formulas,
-                                                occ_covs = occ_covs))),
-            og.psi = as.vector(t(gen.param.fun(beta = beta, 
-                                               occ_formulas = occ_formulas,
-                                               occ_covs = occ_covs))),
-            Gen.Par = colnames(gen.param.fun(beta = beta, 
-                                             occ_formulas = occ_formulas,
-                                             occ_covs = occ_covs))) %>%
+  summarise(psi.est = as.vector(t(psi.fun(f = cbind(t(Estimate))))),
+            og.psi = as.vector(t(psi.fun(f = cbind(t(og_param.val))))),
+            Gen.Par = colnames(psi.fun(f = cbind(t(Estimate))))) %>%
   ungroup()
 
 
@@ -1261,10 +997,66 @@ full.scen4.mar <- rbind(Marg.prob4.sum, Marg.prob4.pl.sum)
 full.scen4.con <- rbind(Cond.prob4.sum, Cond.prob4.pl.sum)
 
 
+### Only likelihood
+
+full.scen.nat <- rbind(State_sim1.sum, State_sim2.sum, State_sim3.sum, State_sim4.sum)
+full.scen.nat$Scenario <- rep(paste0("Scenario", 1:4), each = nrow(State_sim3.sum))
+full.scen.nat$IntStrength <- rep(c("Strong", "Weak", "Strong", "Weak"), each = nrow(State_sim3.sum))
+full.scen.nat$IntType <- rep(c("Pos", "Neg"), each = nrow(State_sim3.sum)*2)
+full.scen.nat$NatPam <- rep(c("f1", "f12", "f2"),nrow( full.scen.nat)/3)
+full.scen.nat$CoeffReg <- rep(c("alpha0", "beta0", "gamma0"), nrow(full.scen.nat)/3)
 
 ## The plot parade ----
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
                 "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+### All Scenarios -----
+
+p.full.scen.v1 <- ggplot(full.scen.nat, aes(x = log(n.sites), y = mu.p.bias,
+                                         col = IntStrength))+
+  geom_hline(yintercept = 0, linetype = "dashed", col = "black")+
+  geom_line(aes(col = IntStrength))+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
+  facet_grid(IntType~CoeffReg)+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias (RB)", col = "Likelihood")+
+  scale_colour_manual(values= c(cbbPalette[2], cbbPalette[3]))+
+  coord_cartesian(ylim =  c(-2.5, 2.5))+
+  theme_bw()
+
+?geom_rect
+
+p.full.scen.v2 <- ggplot(full.scen.nat, aes(x = factor(n.sites), y = mu.p.bias,
+                                            col = IntStrength, group = IntStrength))+
+  geom_hline(yintercept = 0, linetype = "dashed", col = "black")+
+  geom_line()+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
+  facet_grid(IntType~factor(NatPam, levels = c("f1", "f2", "f12")))+
+  labs(x = "Number of Sites", y = "Mean Relative Bias (RB)", col = "Strength")+
+  scale_colour_manual(values= c(cbbPalette[2], cbbPalette[3]))+
+  coord_cartesian(ylim =  c(-2.5, 2.5))+
+  theme_bw()+
+  theme(axis.text.x = element_text(size  = 8))
+
+
+p.full.sce.pwr <- ggplot(full.scen.nat %>%
+                           filter(Parameter == "beta12.0"), aes(x = factor(n.sites), y = PWR,
+                                            col = IntStrength, group = IntStrength))+
+  geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")+
+  geom_line()+
+  geom_point(size = 2.5)+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
+  facet_grid(~IntType)+
+  labs(x = "Number of Sites", y = "Power", col = "Strength")+
+  scale_colour_manual(values= c(cbbPalette[2], cbbPalette[3]))+ylim(0,1)+
+  theme_bw()+
+  theme(axis.text.x = element_text(size  = 8))
+
+
+#ggsave("Figures/Null_AllScenarios_PowerNatPam.jpeg")
 ### Scenario 1 -----
 #### Natural parameters
 
@@ -1286,14 +1078,14 @@ g1.nat <- ggplot(full.scen1.nat, aes(x = log(n.sites), y = mu.p.bias,
 ##### Power
 
 g1.pwr <- ggplot(full.scen1.nat%>%
-                   filter(grepl("f12", Parameter)), aes(x = log(n.sites), y = PWR,
+                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR,
                                                         group = Lik, col = Lik))+
   geom_line()+
   geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Parameter)+
+  #facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario Cov1",
+  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 1 (Str +ve)",
        col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
   geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
@@ -1359,7 +1151,7 @@ g2.nat <- ggplot(full.scen2.nat, aes(x = log(n.sites), y = mu.p.bias,
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (1 Cov per predictor)", col = "Likelihood")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (Weak +ve)", col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")+
   coord_cartesian(ylim =  c(-2.5, 2.5))
@@ -1530,7 +1322,7 @@ g4.nat <- ggplot(full.scen4.nat, aes(x = log(n.sites), y = mu.p.bias,
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-3.5, 3.5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")+
   scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")
-
+  
 
 
 
@@ -1637,7 +1429,7 @@ cowplot::plot_grid(g1.pwr+theme(axis.title.x = element_blank(),
                                 axis.text.y = element_blank(),
                                 axis.title.y = element_blank()),
                    g3.pwr+theme(legend.position = "none"), g4.pwr+theme(axis.text.y = element_blank(),
-                                                                        axis.title.y = element_blank()), nrow = 2)
+                                        axis.title.y = element_blank()), nrow = 2)
 
 
 ###  Marginal probabilities
@@ -1663,8 +1455,6 @@ cowplot::plot_grid(g1.con+theme(axis.title.x = element_blank(),
 cowplot::plot_grid(g3.con+theme(axis.title.x = element_blank(),
                                 axis.text.x = element_blank()),
                    g4.con, nrow = 2)
-
-
 
 
 

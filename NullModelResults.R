@@ -31,7 +31,7 @@ source("MSOM_SimFun.R")
 # Scenario 1 ----
 
 ## Read object
-scen1 <- read_rds("scen1_seed1337_simResults2.rds")
+scen1 <- read_rds("Results/scen1_seed1337_simResults2.rds")
 
 
 ## Normal likelihood 
@@ -39,7 +39,7 @@ State_sim1 <- scen1$State.params %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
-         CV = abs(Estimate)/SE, 
+         CV = SE/abs(Estimate), 
          Covered = ifelse(og_param.val >= Estimate - 1.96*SE & og_param.val <=Estimate+1.96*SE, 1, 0),
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
@@ -49,7 +49,7 @@ State_sim1 <- scen1$State.params %>%
 State_sim1.sum <- State_sim1 %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),
+            mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -153,7 +153,7 @@ State_sim1.pl <- scen1$State.params.pl %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
-         CV = abs(Estimate)/SE, 
+         CV = SE/abs(Estimate), 
          Covered = ifelse(og_param.val >= Estimate - 1.96*SE & og_param.val <=Estimate+1.96*SE, 1, 0),
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
@@ -162,7 +162,7 @@ State_sim1.pl <- scen1$State.params.pl %>%
 State_sim1.pl.sum <- State_sim1.pl %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),
+            mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -274,7 +274,7 @@ full.scen1.con <- rbind(Cond.prob1.sum, Cond.prob1.pl.sum)
 # Scenario 2 ----
 
 ## Read object
-scen2 <- read_rds("scen2_seed1337_simResults2.rds")
+scen2 <- read_rds("Results/scen2_seed1337_simResults2.rds")
 
 
 
@@ -284,7 +284,7 @@ State_sim2 <- scen2$State.params %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
-         CV = abs(Estimate)/SE, 
+         CV = SE/abs(Estimate), 
          Covered = ifelse(og_param.val >= Estimate - 1.96*SE & og_param.val <=Estimate+1.96*SE, 1, 0),
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
@@ -293,7 +293,7 @@ State_sim2 <- scen2$State.params %>%
 State_sim2.sum <- State_sim2 %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),
+            mu.p.bias = mean(prop.bias), mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -394,7 +394,7 @@ State_sim2.pl <- scen2$State.params.pl %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
-         CV = abs(Estimate)/SE, 
+         CV = SE/abs(Estimate), 
          Covered = ifelse(og_param.val >= Estimate - 1.96*SE & og_param.val <=Estimate+1.96*SE, 1, 0),
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
@@ -403,7 +403,7 @@ State_sim2.pl <- scen2$State.params.pl %>%
 State_sim2.pl.sum <- State_sim2.pl %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),
+            mu.p.bias = mean(prop.bias), mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -517,7 +517,7 @@ full.scen2.con <- rbind(Cond.prob2.sum, Cond.prob2.pl.sum)
 # Scenario 3 ----
 
 ## Read object
-scen3 <- read_rds("scen3_seed1337_simResults2.rds")
+scen3 <- read_rds("Results/scen3_seed1337_simResults2.rds")
 
 
 
@@ -527,7 +527,7 @@ State_sim3 <- scen3$State.params %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
-         CV = abs(Estimate)/SE, 
+         CV = SE/abs(Estimate), 
          Covered = ifelse(og_param.val >= Estimate - 1.96*SE & og_param.val <=Estimate+1.96*SE, 1, 0),
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
@@ -536,7 +536,7 @@ State_sim3 <- scen3$State.params %>%
 State_sim3.sum <- State_sim3 %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),
+            mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -636,7 +636,7 @@ State_sim3.pl <- scen3$State.params.pl %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
-         CV = abs(Estimate)/SE, 
+         CV = SE/abs(Estimate), 
          Covered = ifelse(og_param.val >= Estimate - 1.96*SE & og_param.val <=Estimate+1.96*SE, 1, 0),
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
@@ -645,7 +645,7 @@ State_sim3.pl <- scen3$State.params.pl %>%
 State_sim3.pl.sum <- State_sim3.pl %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),
+            mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -759,7 +759,7 @@ full.scen3.con <- rbind(Cond.prob3.sum, Cond.prob3.pl.sum)
 
 
 ## Read object
-scen4 <- read_rds("scen4_seed1337_simResults2.rds")
+scen4 <- read_rds("Results/scen4_seed1337_simResults2.rds")
 
 
 
@@ -769,7 +769,7 @@ State_sim4 <- scen4$State.params %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
-         CV = abs(Estimate)/SE, 
+         CV = SE/abs(Estimate), 
          Covered = ifelse(og_param.val >= Estimate - 1.96*SE & og_param.val <=Estimate+1.96*SE, 1, 0),
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
@@ -778,7 +778,7 @@ State_sim4 <- scen4$State.params %>%
 State_sim4.sum <- State_sim4 %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),
+            mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -876,7 +876,7 @@ State_sim4.pl <- scen4$State.params.pl %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
-         CV = abs(Estimate)/SE, 
+         CV = SE/abs(Estimate), 
          Covered = ifelse(og_param.val >= Estimate - 1.96*SE & og_param.val <=Estimate+1.96*SE, 1, 0),
          below.alpha = ifelse(`P(>|z|)` < 0.05, 1, 0)) %>%
   ungroup()
@@ -885,7 +885,7 @@ State_sim4.pl <- scen4$State.params.pl %>%
 State_sim4.pl.sum <- State_sim4.pl %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),
+            mu.p.bias = mean(prop.bias), mu.CV = mean(CV, na.rm = T),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -1003,34 +1003,45 @@ cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
 #### Natural parameters
 
 ##### Prop.bias
-g1.nat <- ggplot(full.scen1.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+g1.nat <- ggplot(full.scen1.nat, aes(x = log(n.sites), y = mu.p.bias, 
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 1 (Str +ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-2.5, 2.5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 1 (Str +ve)", col = "Likelihood")+
+  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+
+  geom_hline(yintercept = 0, linetype = "dashed", col = "green")+
+  coord_cartesian(ylim =  c(-2.5, 2.5))
 
 ##### Power
 
 g1.pwr <- ggplot(full.scen1.nat%>%
-                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR, col = Lik))+
+                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR,
+                                                        group = Lik, col = Lik))+
+  geom_line()+
   geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   #facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 1 (Str +ve)")+
+  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 1 (Str +ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
   geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
 
 #### General parameters
 g1.gen <- ggplot(full.scen1.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5, pch = 15)+
+  geom_point(size = 2.5, pch = 15,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Gen.Par)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 1 (Str +ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 1 (Str +ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
@@ -1038,22 +1049,32 @@ g1.gen <- ggplot(full.scen1.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 #### Derived parameters
 
 ##### Marginal probs
-g1.mar <-  ggplot(full.scen1.mar, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+g1.mar <-  ggplot(full.scen1.mar, aes(x = log(n.sites), y = mu.p.bias,
+                                      group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Species)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 1 (Str +ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias",
+       title = "Scenario 1 (Str +ve)", col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 ##### conditional probs
-g1.con <- ggplot(full.scen1.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5, pch = 15)+
+g1.con <- ggplot(full.scen1.con, aes(x = log(n.sites), y = mu.p.bias,
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5, pch = 15,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Cond.prob)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 1 (Str +ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 1 (Str +ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
@@ -1063,35 +1084,48 @@ g1.con <- ggplot(full.scen1.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 #### Natural parameters
 
 ##### Prop.bias
-g2.nat <- ggplot(full.scen2.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+g2.nat <- ggplot(full.scen2.nat, aes(x = log(n.sites), y = mu.p.bias,
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 2 (Weak +ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-2.5, 2.5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (Weak +ve)", col = "Likelihood")+
+  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+
+  geom_hline(yintercept = 0, linetype = "dashed", col = "green")+
+  coord_cartesian(ylim =  c(-2.5, 2.5))
 
 
 ##### Power
 
 g2.pwr <- ggplot(full.scen2.nat%>%
-                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR, col = Lik))+
+                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR,
+                                                        group = Lik, col = Lik))+
+  geom_line()+
   geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   #facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 2 (Weak +ve)")+
+  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 2 (Weak +ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
   geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
 
 #### General parameters
-g2.gen <- ggplot(full.scen2.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5, pch = 15)+
+g2.gen <- ggplot(full.scen2.gen, aes(x = log(n.sites), y = mu.p.bias,
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5, pch = 15,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Gen.Par)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 2 (Weak +ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (Weak +ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
@@ -1099,22 +1133,32 @@ g2.gen <- ggplot(full.scen2.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 #### Derived parameters
 
 ##### Marginal probs
-g2.mar <-  ggplot(full.scen2.mar, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+g2.mar <-  ggplot(full.scen2.mar, aes(x = log(n.sites), y = mu.p.bias,
+                                      group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Species)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 2 (Weak +ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (Weak +ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 ##### conditional probs
-g2.con <- ggplot(full.scen2.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5, pch = 15)+
+g2.con <- ggplot(full.scen2.con, aes(x = log(n.sites), y = mu.p.bias,
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5, pch = 15,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Cond.prob)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 2 (Weak +ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (Weak +ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
@@ -1123,12 +1167,17 @@ g2.con <- ggplot(full.scen2.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 #### Natural parameters
 
 ##### Prop.bias
-g3.nat <- ggplot(full.scen3.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+g3.nat <- ggplot(full.scen3.nat, aes(x = log(n.sites), y = mu.p.bias,
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 3 (Str -ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 3 (Str -ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-5.5, 5.5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
@@ -1136,22 +1185,30 @@ g3.nat <- ggplot(full.scen3.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 ##### Power
 
 g3.pwr <- ggplot(full.scen3.nat%>%
-                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR, col = Lik))+
+                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR,
+                                                        group = Lik, col = Lik))+
+  geom_line()+
   geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   #facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 3 (Str -ve)")+
+  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 3 (Str -ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
   geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
 
 #### General parameters
-g3.gen <- ggplot(full.scen3.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5, pch = 15)+
+g3.gen <- ggplot(full.scen3.gen, aes(x = log(n.sites), y = mu.p.bias,
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5, pch = 15,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Gen.Par)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 3 (Str -ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 3 (Str -ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.8, .8)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
@@ -1159,22 +1216,32 @@ g3.gen <- ggplot(full.scen3.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 #### Derived parameters
 
 ##### Marginal probs
-g3.mar <-  ggplot(full.scen3.mar, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+g3.mar <-  ggplot(full.scen3.mar, aes(x = log(n.sites), y = mu.p.bias,
+                                      group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Species)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 3 (Str -ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 3 (Str -ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 ##### conditional probs
-g3.con <- ggplot(full.scen3.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5, pch = 15)+
+g3.con <- ggplot(full.scen3.con, aes(x = log(n.sites), y = mu.p.bias,
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5, pch = 15,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Cond.prob)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 3 (Str -ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 3 (Str -ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
@@ -1184,58 +1251,83 @@ g3.con <- ggplot(full.scen3.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 #### Natural parameters
 
 ##### Prop.bias
-g4.nat <- ggplot(full.scen4.nat, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+g4.nat <- ggplot(full.scen4.nat, aes(x = log(n.sites), y = mu.p.bias,
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 4 (Weak -ve)")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-5.5, 5.5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 4 (Weak -ve)",
+       col = "Likelihood")+
+  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-3.5, 3.5)+
+  geom_hline(yintercept = 0, linetype = "dashed", col = "green")+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")
+  
+
 
 
 ##### Power
 
 g4.pwr <- ggplot(full.scen4.nat%>%
-                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR, col = Lik))+
-  geom_point(size = 2.5, pch = 18)+
+                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR,
+                                                        group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   #facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 4 (Weak -ve)")+
+  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 4 (Weak -ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
   geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
 
 #### General parameters
-g4.gen <- ggplot(full.scen4.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5, pch = 15)+
+g4.gen <- ggplot(full.scen4.gen, aes(x = log(n.sites), y = mu.p.bias,group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5, pch = 15,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Gen.Par)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 4 (Weak -ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 4 (Weak -ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.8, .8)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
+
 
 
 #### Derived parameters
 
 ##### Marginal probs
-g4.mar <-  ggplot(full.scen4.mar, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5)+
+g4.mar <-  ggplot(full.scen4.mar, aes(x = log(n.sites), y = mu.p.bias,
+                                      group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Species)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 4 (Weak -ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 4 (Weak -ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
 ##### conditional probs
-g4.con <- ggplot(full.scen4.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5, pch = 15)+
+g4.con <- ggplot(full.scen4.con, aes(x = log(n.sites), y = mu.p.bias,
+                                     group = Lik, col = Lik))+
+  geom_line()+
+  geom_point(size = 2.5, pch = 15,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
   facet_wrap(~Cond.prob)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Prop bias", title = "Scenario 4 (Weak -ve)")+
+  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 4 (Weak -ve)",
+       col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
 
@@ -1248,8 +1340,9 @@ g4.con <- ggplot(full.scen4.con, aes(x = log(n.sites), y = mu.p.bias, col = Lik)
 ### Natural parameters 
 #### Positive scenarios
 cowplot::plot_grid(g1.nat+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank()),
-                   g2.nat, nrow = 2)
+                                axis.text.x = element_blank())+
+                     guides(alpha = "none"),
+                   g2.nat+guides(col = "none"), nrow = 2)
 
 #### Negative scenarios
 cowplot::plot_grid(g3.nat+theme(axis.title.x = element_blank(),
