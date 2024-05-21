@@ -1038,7 +1038,7 @@ p.full.scen.v2 <- ggplot(full.scen.nat, aes(x = factor(n.sites), y = mu.p.bias,
   coord_cartesian(ylim =  c(-2.5, 2.5))+
   theme_bw()+guides(alpha = "none")+
   theme(axis.text.x = element_text(size  = 8))
-
+p.full.scen.v2 + guides(alpha = "none")
 
 p.full.sce.pwr <- ggplot(full.scen.nat %>%
                            filter(Parameter == "beta12.0"), aes(x = factor(n.sites), y = PWR,
