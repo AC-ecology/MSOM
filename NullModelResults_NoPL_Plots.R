@@ -1036,7 +1036,7 @@ p.full.scen.v2 <- ggplot(full.scen.nat, aes(x = factor(n.sites), y = mu.p.bias,
   labs(x = "Number of Sites", y = "Mean Relative Bias (RB)", col = "Interaction strength")+
   scale_colour_manual(values= c(cbbPalette[2], cbbPalette[3]))+
   coord_cartesian(ylim =  c(-2.5, 2.5))+
-  theme_bw()+
+  theme_bw()+guides(alpha = "none")+
   theme(axis.text.x = element_text(size  = 8))
 
 
@@ -1050,10 +1050,10 @@ p.full.sce.pwr <- ggplot(full.scen.nat %>%
   facet_grid(~IntType)+
   labs(x = "Number of Sites", y = "Power", col = "Strength")+
   scale_colour_manual(values= c(cbbPalette[2], cbbPalette[3]))+ylim(0,1)+
-  theme_bw()+
+  theme_bw()+ guides(alpha = "none")+
   theme(axis.text.x = element_text(size  = 8))
 
-#ggsave("Figures/Null_AllScenarios_PowerNatPam.jpeg")
+#ggsave("Figures/Null_AllScenarios_LogLikRBNatPam.jpeg")
 ### Scenario 1 -----
 #### Natural parameters
 
