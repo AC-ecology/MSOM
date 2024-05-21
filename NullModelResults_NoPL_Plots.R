@@ -1048,7 +1048,7 @@ p.full.sce.pwr <- ggplot(full.scen.nat %>%
   geom_point(size = 2.5)+
   scale_alpha_manual(values = c(1, 0.3))+
   facet_grid(~IntType)+
-  labs(x = "Number of Sites", y = "Power", col = "Strength")+
+  labs(x = "Number of Sites", y = "Power", col = "Interaction strength")+
   scale_colour_manual(values= c(cbbPalette[2], cbbPalette[3]))+ylim(0,1)+
   theme_bw()+ guides(alpha = "none")+
   theme(axis.text.x = element_text(size  = 8))
