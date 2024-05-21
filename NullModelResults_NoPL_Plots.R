@@ -1053,7 +1053,6 @@ p.full.sce.pwr <- ggplot(full.scen.nat %>%
   theme_bw()+
   theme(axis.text.x = element_text(size  = 8))
 
-
 #ggsave("Figures/Null_AllScenarios_PowerNatPam.jpeg")
 ### Scenario 1 -----
 #### Natural parameters
