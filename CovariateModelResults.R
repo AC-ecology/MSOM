@@ -144,12 +144,13 @@ State_simcov1.sum <- State_simcov1 %>%
   filter(conv == 1) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias), mu.CV = mean(CV, na.rm = T),
+            og.val = unique(og_param.val),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
-            CR = mean(Covered, na.rm = T),                               # Coverage rate
-            PWR = mean(below.alpha, na.rm = T),                          # Mean type I error rate
-            Conv.rate = mean(conv),                           # Mean convergence rate
-            ndatasets = n(),
+            CR = mean(Covered, na.rm = T),                    # Coverage rate 
+            PWR = mean(below.alpha, na.rm = T),               # Mean type I error rate
+            Conv.rate = mean(conv),                           # Mean convergence rate (should be 100%)
+            ndatasets = n(),                                  # Number datasets in summary
             Lik = "LL") %>% 
   ungroup()
 
@@ -276,6 +277,7 @@ State_simcov1.pl.sum <- State_simcov1.pl %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
+            og.val = unique(og_param.val),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
@@ -451,12 +453,15 @@ State_sim2.sum <- State_sim2 %>%
   filter(conv == 1) %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
-            mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
+            mu.p.bias = mean(prop.bias),
+            mu.CV = mean(CV, na.rm = T),
+            og.val = unique(og_param.val),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
             PWR = mean(below.alpha),                          # Mean type I error rate
             Conv.rate = mean(conv),                           # Mean convergence rate
+            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
@@ -466,6 +471,7 @@ State_sim2.sum <- State_sim2 %>%
 
 
 GenParam_sim2 <- State_sim2 %>%
+  filter(conv == 1) %>%
   group_by(n.sites, niter) %>%
   summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1:2],
                                                             Estimate[3:4],
@@ -494,7 +500,7 @@ GenParam_sim2.sum <- GenParam_sim2 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
-            Lik = "LL") %>% 
+            Lik = "LL", ndatasets = n()) %>% 
   ungroup()
 
 
@@ -557,6 +563,7 @@ Cond.prob2.sum <- Cond.prob2 %>%
 ## Penalised likelihood 
 
 State_sim2.pl <- scen2$State.params.pl %>%
+  mutate(conv = ifelse(any(is.nan(SE)), 0, conv)) %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
@@ -567,14 +574,17 @@ State_sim2.pl <- scen2$State.params.pl %>%
 
 ### Summary of Normal likelihood (LL)
 State_sim2.pl.sum <- State_sim2.pl %>%
+  filter(conv == 1) %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
+            og.val = unique(og_param.val),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
             PWR = mean(below.alpha),                          # Mean type I error rate
             Conv.rate = mean(conv),                           # Mean convergence rate
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -584,6 +594,7 @@ State_sim2.pl.sum <- State_sim2.pl %>%
 
 
 GenParam_sim2.pl <- State_sim2.pl %>%
+  filter(conv == 1) %>%
   group_by(n.sites, niter) %>%
   summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1:2],
                                                             Estimate[3:4],
@@ -612,7 +623,7 @@ GenParam_sim2.pl.sum <- GenParam_sim2.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
-            Lik = "PL") %>% 
+            Lik = "PL", ndatasets = n()) %>% 
   ungroup()
 
 
@@ -676,7 +687,6 @@ Cond.prob2.pl.sum <- Cond.prob2.pl %>%
 
 ## Natural parameters
 full.scen2.nat <- rbind(State_sim2.sum, State_sim2.pl.sum)
-
 ## General parameters
 
 full.scen2.gen <- rbind(GenParam_sim2.sum, GenParam_sim2.pl.sum)
@@ -715,20 +725,33 @@ beta12 <- c(beta12.0, beta12.1, beta12.2)
 
 beta = list(beta1, beta2, beta12)
 
+
+
 ## Formulas and occupancy formulas
 
 
 occ_formulas <- c("~occ_cov1",          #f1
                   "~occ_cov2",          #f2
                   "~occ_cov3 + occ_cov4")   #f12
+
+
+
+
+occ_covs = data.frame(occ_cov1 = 1,
+                      occ_cov2 = 1,
+                      occ_cov3 = 1,
+                      occ_cov4 = 1)
 ## Read object
 scen3 <- read_rds("Results/Scenario3_2spNCovariate4_2intseed1337_simResults_v2.rds")
 
 
-
+ok <- scen3$State.params$SE
 
 ## Normal likelihood 
 State_sim3 <- scen3$State.params %>%
+  group_by(n.sites, niter) %>%
+  mutate(conv = ifelse(any(is.nan(SE)) |any(is.na(SE)) , 0, conv)) %>%
+  ungroup %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
@@ -739,15 +762,18 @@ State_sim3 <- scen3$State.params %>%
 
 ### Summary of Normal likelihood (LL)
 State_sim3.sum <- State_sim3 %>%
+  filter(conv == 1) %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
+            og.val = unique(og_param.val),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
             PWR = mean(below.alpha),                          # Mean type I error rate
             Conv.rate = mean(conv),                           # Mean convergence rate
-            Lik = "LL") %>% 
+            Lik = "LL",
+            ndatasets = n()) %>% 
   ungroup()
 
 
@@ -756,10 +782,11 @@ State_sim3.sum <- State_sim3 %>%
 
 
 GenParam_sim3 <- State_sim3 %>%
+  filter(conv == 1) %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
+  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1:2],
+                                                            Estimate[3:4],
+                                                            Estimate[5:7]), 
                                                 occ_formulas = occ_formulas,
                                                 occ_covs = occ_covs))),
             og.psi = as.vector(t(gen.param.fun(beta = beta, 
@@ -784,7 +811,7 @@ GenParam_sim3.sum <- GenParam_sim3 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
-            Lik = "LL") %>% 
+            Lik = "LL", ndatasets = n()) %>% 
   ungroup()
 
 
@@ -828,6 +855,7 @@ Marg.prob3.sum <- Marg.prob3 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
@@ -839,6 +867,7 @@ Cond.prob3.sum <- Cond.prob3 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
@@ -846,6 +875,9 @@ Cond.prob3.sum <- Cond.prob3 %>%
 ## Penalised likelihood 
 
 State_sim3.pl <- scen3$State.params.pl %>%
+  group_by(n.sites, niter) %>%
+  mutate(conv = ifelse(any(is.nan(SE)) |any(is.na(SE)) , 0, conv)) %>%
+  ungroup %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
@@ -856,14 +888,17 @@ State_sim3.pl <- scen3$State.params.pl %>%
 
 ### Summary of Normal likelihood (LL)
 State_sim3.pl.sum <- State_sim3.pl %>%
+  filter(conv == 1) %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
+            og.val = unique(og_param.val),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
             PWR = mean(below.alpha),                          # Mean type I error rate
             Conv.rate = mean(conv),                           # Mean convergence rate
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -873,10 +908,11 @@ State_sim3.pl.sum <- State_sim3.pl %>%
 
 
 GenParam_sim3.pl <- State_sim3.pl %>%
+  filter(conv == 1) %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
+  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1:2],
+                                                            Estimate[3:4],
+                                                            Estimate[5:7]), 
                                                 occ_formulas = occ_formulas,
                                                 occ_covs = occ_covs))),
             og.psi = as.vector(t(gen.param.fun(beta = beta, 
@@ -901,6 +937,7 @@ GenParam_sim3.pl.sum <- GenParam_sim3.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -944,6 +981,7 @@ Marg.prob3.pl.sum <- Marg.prob3.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -955,6 +993,7 @@ Cond.prob3.pl.sum <- Cond.prob3.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -1008,6 +1047,12 @@ beta = list(beta1, beta2, beta12)
 occ_formulas <- c("~occ_cov1 + occ_cov4",          #f1
                   "~occ_cov2",          #f2
                   "~occ_cov3 + occ_cov4")   #f12
+
+
+occ_covs = data.frame(occ_cov1 = 1,
+                      occ_cov2 = 1,
+                      occ_cov3 = 1,
+                      occ_cov4 = 1)
 ## Read object
 scen4 <- read_rds("Results/Scenario4_2spNCovariate4_SharedCovsseed1337_simResults_v2.rds")
 
@@ -1016,6 +1061,9 @@ scen4 <- read_rds("Results/Scenario4_2spNCovariate4_SharedCovsseed1337_simResult
 
 ## Normal likelihood 
 State_sim4 <- scen4$State.params %>%
+  group_by(n.sites, niter) %>%
+  mutate(conv = ifelse(any(is.nan(SE)) |any(is.na(SE)) , 0, conv)) %>%
+  ungroup %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
@@ -1026,14 +1074,17 @@ State_sim4 <- scen4$State.params %>%
 
 ### Summary of Normal likelihood (LL)
 State_sim4.sum <- State_sim4 %>%
+  filter(conv == 1) %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias),mu.CV = mean(CV, na.rm = T),
+            og.val = unique(og_param.val),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
             PWR = mean(below.alpha),                          # Mean type I error rate
             Conv.rate = mean(conv),                           # Mean convergence rate
+            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
@@ -1043,10 +1094,11 @@ State_sim4.sum <- State_sim4 %>%
 
 
 GenParam_sim4 <- State_sim4 %>%
+  filter(conv == 1) %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
+  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1:3],
+                                                            Estimate[4:5],
+                                                            Estimate[6:8]), 
                                                 occ_formulas = occ_formulas,
                                                 occ_covs = occ_covs))),
             og.psi = as.vector(t(gen.param.fun(beta = beta, 
@@ -1071,6 +1123,7 @@ GenParam_sim4.sum <- GenParam_sim4 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
@@ -1114,6 +1167,7 @@ Marg.prob4.sum <- Marg.prob4 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
@@ -1125,12 +1179,16 @@ Cond.prob4.sum <- Cond.prob4 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
 ## Penalised likelihood 
 
 State_sim4.pl <- scen4$State.params.pl %>%
+  group_by(n.sites, niter) %>%
+  mutate(conv = ifelse(any(is.nan(SE)) |any(is.na(SE)) , 0, conv)) %>%
+  ungroup %>%
   group_by(Parameter) %>%
   mutate(bias = (Estimate-og_param.val), prop.bias = (Estimate-og_param.val)/og_param.val,
          #prop.bias = abs((Estimate-og_pam)/og_pam),
@@ -1141,14 +1199,17 @@ State_sim4.pl <- scen4$State.params.pl %>%
 
 ### Summary of Normal likelihood (LL)
 State_sim4.pl.sum <- State_sim4.pl %>%
+  filter(conv == 1) %>%
   group_by(n.sites, Parameter) %>%
   summarise(mu.bias = mean(bias), sd.bias = sd(bias),            # Mean and St.D of bias
             mu.p.bias = mean(prop.bias), mu.CV = mean(CV, na.rm = T),
+            og.val = unique(og_param.val),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
             CR = mean(Covered),                               # Coverage rate
             PWR = mean(below.alpha),                          # Mean type I error rate
             Conv.rate = mean(conv),                           # Mean convergence rate
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -1158,10 +1219,11 @@ State_sim4.pl.sum <- State_sim4.pl %>%
 
 
 GenParam_sim4.pl <- State_sim4.pl %>%
+  filter(conv == 1) %>%
   group_by(n.sites, niter) %>%
-  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1],
-                                                            Estimate[2],
-                                                            Estimate[3:4]), 
+  summarise(psi.est = as.vector(t(gen.param.fun(beta = list(Estimate[1:3],
+                                                            Estimate[4:5],
+                                                            Estimate[6:8]), 
                                                 occ_formulas = occ_formulas,
                                                 occ_covs = occ_covs))),
             og.psi = as.vector(t(gen.param.fun(beta = beta, 
@@ -1186,6 +1248,7 @@ GenParam_sim4.pl.sum <- GenParam_sim4.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -1221,7 +1284,6 @@ Cond.prob4.pl <-  GenParam_sim4.pl %>%
             bias = Cond.est - Cond.og, prop.bias = (Cond.est - Cond.og)/Cond.og) %>%
   ungroup()
 
-
 ## Summaries of derived
 
 Marg.prob4.pl.sum <- Marg.prob4.pl %>%
@@ -1230,6 +1292,7 @@ Marg.prob4.pl.sum <- Marg.prob4.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -1241,6 +1304,7 @@ Cond.prob4.pl.sum <- Cond.prob4.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -1281,13 +1345,16 @@ g1.nat <- ggplot(full.scen1.nat, aes(x = log(n.sites), y = mu.p.bias,
   labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 1 (Str +ve)", col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")+
-  coord_cartesian(ylim =  c(-2.5, 2.5))
+  coord_cartesian(ylim =  c(-2.5, 2.5)) +guides(alpha = "none")
+
+
 
 ##### Power
 
 g1.pwr <- ggplot(full.scen1.nat%>%
-                   filter(grepl("f12", Parameter)), aes(x = log(n.sites), y = PWR,
-                                                        group = Lik, col = Lik))+
+                   filter(grepl("f12", Parameter) | grepl(".1", Parameter)),
+                 aes(x = log(n.sites), y = PWR,
+                     group = Lik, col = Lik))+
   geom_line()+
   geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
@@ -1368,14 +1435,15 @@ g2.nat <- ggplot(full.scen2.nat, aes(x = log(n.sites), y = mu.p.bias,
 ##### Power
 
 g2.pwr <- ggplot(full.scen2.nat%>%
-                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR,
-                                                        group = Lik, col = Lik))+
+                   filter(grepl("f12", Parameter) |grepl("[0-9].1", Parameter) ),
+                 aes(x = log(n.sites), y = PWR,
+                     group = Lik, col = Lik))+
   geom_line()+
   geom_point(size = 2.5, pch = 18)+
   #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  #facet_wrap(~Parameter)+
+  facet_wrap(~Parameter)+
   theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 2 (Weak +ve)",
+  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario Cov1",
        col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
   geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
@@ -1596,6 +1664,76 @@ g4.con <- ggplot(full.scen4.con, aes(x = log(n.sites), y = mu.p.bias,
        col = "Likelihood")+
   scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
   geom_hline(yintercept = 0, linetype = "dashed", col = "green")
+
+
+
+## All scenarios together -----
+
+
+full.covscen.nat <- rbind(full.scen1.nat %>% mutate(Scenario = "ScenCov1"),
+                          full.scen2.nat %>% mutate(Scenario = "ScenCov2"),
+                          full.scen3.nat %>% mutate(Scenario = "ScenCov3"),
+                          full.scen4.nat %>% mutate(Scenario = "ScenCov4"))
+full.covscen.nat$order <-  ifelse(nchar(full.covscen.nat$Parameter)>4, "2nd", "1st")
+
+full.covscen.nat$CoefReg <- ifelse(grepl("\\.0",full.covscen.nat$Parameter, perl = F), "Intercept", "Slope")
+
+### Power plot(s)
+
+
+# Colour by Coeficent Regression type (Int v Slope) facet by Scenario
+ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope"), 
+       aes(x = log(n.sites), y = PWR, group = interaction(Parameter, Lik)))+
+  geom_hline(yintercept = 0.95, col = "red", linetype = "dotted")+
+  geom_line(aes( linetype = Lik, col = CoefReg))+
+  facet_grid(Scenario~Lik)+
+  labs(x = "Log(Number of Sites)", y = "Power (Type I error)")+
+  scale_y_continuous(labels = scales::percent_format())+
+  scale_colour_manual(values = cbbPalette[c(4, 8)])
+
+
+# Colour by effect size (Int v Slope) facet by Likelihood
+ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope"), 
+       aes(x = log(n.sites), y = PWR, group = interaction(Parameter, Lik)))+
+  geom_hline(yintercept = 0.95, col = "red", linetype = "dotted")+
+  geom_line(aes( linetype = Lik, col = abs(og.val)))+
+  facet_grid(Scenario~Lik)+
+  labs(x = "Log(Number of Sites)", y = "Power (Type I error)", col = "Effect Size")+
+  scale_y_continuous(labels = scales::percent_format())+
+  scale_colour_viridis_c()
+
+# Colour by natural parameter order type (Int v Slope) facet by Scenario
+ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope"), 
+       aes(x = log(n.sites), y = PWR, group = interaction(Parameter, Lik)))+
+  geom_hline(yintercept = 0.95, col = "red", linetype = "dotted")+
+  geom_line(aes( linetype = Lik, col = order))+
+  facet_grid(Scenario~Lik)+
+  labs(x = "Log(Number of Sites)", y = "Power (Type I error)")+
+  scale_y_continuous(labels = scales::percent_format())+
+  scale_colour_manual(values = cbbPalette[c(4, 8)])
+
+
+
+## Bias plots
+### Natural parameters 
+ggplot(full.covscen.nat, 
+       aes(x = log(n.sites), y = mu.p.bias, group = interaction(Parameter, Lik)))+
+  geom_hline(yintercept = 0, linetype = "dashed", col = "black")+
+  geom_line(aes(col = interaction(order, Lik)))+
+  geom_point(size = 2.5,
+             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased"),
+                 col = interaction(order, Lik)))+
+  scale_alpha_manual(values = c(1, 0.3))+
+  facet_grid(Scenario~Lik)+
+  labs(x = "Log(Number of Sites)", y = "Relative Bias", col = "Order-Likelihood")+ guides(alpha = "none")+
+  coord_cartesian(ylim =  c(-1.5, 1.5))+
+  scale_y_continuous(labels = scales::percent_format() )+
+  scale_colour_manual(values = cbbPalette[c(4:9)])
+
+
+
+
+
 
 
 
