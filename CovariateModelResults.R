@@ -545,6 +545,7 @@ Marg.prob2.sum <- Marg.prob2 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
@@ -556,6 +557,7 @@ Cond.prob2.sum <- Cond.prob2 %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "LL") %>% 
   ungroup()
 
@@ -666,6 +668,7 @@ Marg.prob2.pl.sum <- Marg.prob2.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -677,6 +680,7 @@ Cond.prob2.pl.sum <- Cond.prob2.pl %>%
             mu.p.bias = mean(prop.bias),
             bias.lci = mu.bias - 1.96*sd.bias,                # Lower bias CI
             bias.uci = mu.bias + 1.96*sd.bias,                # Upper bias CI
+            ndatasets = n(),
             Lik = "PL") %>% 
   ungroup()
 
@@ -1329,479 +1333,190 @@ full.scen4.con <- rbind(Cond.prob4.sum, Cond.prob4.pl.sum)
 ## The plot parade ----
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
                 "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-### Scenario 1 -----
-#### Natural parameters
-
-##### Prop.bias
-g1.nat <- ggplot(full.scen1.nat, aes(x = log(n.sites), y = mu.p.bias, 
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Parameter)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 1 (Str +ve)", col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")+
-  coord_cartesian(ylim =  c(-2.5, 2.5)) +guides(alpha = "none")
-
-
-
-##### Power
-
-g1.pwr <- ggplot(full.scen1.nat%>%
-                   filter(grepl("f12", Parameter) | grepl(".1", Parameter)),
-                 aes(x = log(n.sites), y = PWR,
-                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 18)+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Parameter)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario Cov1",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
-  geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
-
-#### General parameters
-g1.gen <- ggplot(full.scen1.gen, aes(x = log(n.sites), y = mu.p.bias, col = Lik))+
-  geom_point(size = 2.5, pch = 15,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Gen.Par)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 1 (Str +ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-
-#### Derived parameters
-
-##### Marginal probs
-g1.mar <-  ggplot(full.scen1.mar, aes(x = log(n.sites), y = mu.p.bias,
-                                      group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Species)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias",
-       title = "Scenario 1 (Str +ve)", col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-##### conditional probs
-g1.con <- ggplot(full.scen1.con, aes(x = log(n.sites), y = mu.p.bias,
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 15,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Cond.prob)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 1 (Str +ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-
-
-### Scenario 2 ------
-#### Natural parameters
-
-##### Prop.bias
-g2.nat <- ggplot(full.scen2.nat, aes(x = log(n.sites), y = mu.p.bias,
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Parameter)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (1 Cov per predictor)", col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")+
-  coord_cartesian(ylim =  c(-2.5, 2.5))
-
-
-##### Power
-
-g2.pwr <- ggplot(full.scen2.nat%>%
-                   filter(grepl("f12", Parameter) |grepl("[0-9].1", Parameter) ),
-                 aes(x = log(n.sites), y = PWR,
-                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 18)+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Parameter)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario Cov1",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
-  geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
-
-#### General parameters
-g2.gen <- ggplot(full.scen2.gen, aes(x = log(n.sites), y = mu.p.bias,
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 15,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Gen.Par)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (Weak +ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-
-#### Derived parameters
-
-##### Marginal probs
-g2.mar <-  ggplot(full.scen2.mar, aes(x = log(n.sites), y = mu.p.bias,
-                                      group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Species)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (Weak +ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-##### conditional probs
-g2.con <- ggplot(full.scen2.con, aes(x = log(n.sites), y = mu.p.bias,
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 15,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Cond.prob)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 2 (Weak +ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-
-### Scenario 3 -----
-#### Natural parameters
-
-##### Prop.bias
-g3.nat <- ggplot(full.scen3.nat, aes(x = log(n.sites), y = mu.p.bias,
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Parameter)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 3 (Str -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-5.5, 5.5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-
-##### Power
-
-g3.pwr <- ggplot(full.scen3.nat%>%
-                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR,
-                                                        group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 18)+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  #facet_wrap(~Parameter)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 3 (Str -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
-  geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
-
-#### General parameters
-g3.gen <- ggplot(full.scen3.gen, aes(x = log(n.sites), y = mu.p.bias,
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 15,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Gen.Par)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 3 (Str -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.8, .8)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-
-#### Derived parameters
-
-##### Marginal probs
-g3.mar <-  ggplot(full.scen3.mar, aes(x = log(n.sites), y = mu.p.bias,
-                                      group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Species)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 3 (Str -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-##### conditional probs
-g3.con <- ggplot(full.scen3.con, aes(x = log(n.sites), y = mu.p.bias,
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 15,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Cond.prob)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 3 (Str -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-
-
-### Scenario 4 -----
-#### Natural parameters
-
-##### Prop.bias
-g4.nat <- ggplot(full.scen4.nat, aes(x = log(n.sites), y = mu.p.bias,
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Parameter)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 4 (Weak -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-3.5, 3.5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")
-
-
-
-
-##### Power
-
-g4.pwr <- ggplot(full.scen4.nat%>%
-                   filter(Parameter == "beta12.0"), aes(x = log(n.sites), y = PWR,
-                                                        group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5)+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  #facet_wrap(~Parameter)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Power", title = "Scenario 4 (Weak -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(0, 1)+
-  geom_hline(yintercept = 0.95, linetype = "dashed", col = "red")
-
-#### General parameters
-g4.gen <- ggplot(full.scen4.gen, aes(x = log(n.sites), y = mu.p.bias,group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 15,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Gen.Par)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 4 (Weak -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[1], cbbPalette[2]))+ylim(-.8, .8)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-
-
-#### Derived parameters
-
-##### Marginal probs
-g4.mar <-  ggplot(full.scen4.mar, aes(x = log(n.sites), y = mu.p.bias,
-                                      group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Species)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 4 (Weak -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-##### conditional probs
-g4.con <- ggplot(full.scen4.con, aes(x = log(n.sites), y = mu.p.bias,
-                                     group = Lik, col = Lik))+
-  geom_line()+
-  geom_point(size = 2.5, pch = 15,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased")))+
-  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
-  #geom_errorbar(aes(ymin = bias.lci, ymax = bias.uci ))+
-  facet_wrap(~Cond.prob)+
-  theme_bw()+
-  labs(x = "log(Number of Sites)", y = "Mean Relative Bias", title = "Scenario 4 (Weak -ve)",
-       col = "Likelihood")+
-  scale_colour_manual(values= c(cbbPalette[3], cbbPalette[7]))+ylim(-.5, .5)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "green")
-
-
+safe_colorblind_palette <- c("#88CCEE", "#CC6677", "#DDCC77", "#117733", "#332288", "#AA4499", 
+                             "#44AA99", "#999933", "#882255", "#661100", "#6699CC", "#888888")
+scales::show_col(safe_colorblind_palette)
 
 ## All scenarios together -----
 
 
-full.covscen.nat <- rbind(full.scen1.nat %>% mutate(Scenario = "ScenCov1"),
-                          full.scen2.nat %>% mutate(Scenario = "ScenCov2"),
-                          full.scen3.nat %>% mutate(Scenario = "ScenCov3"),
-                          full.scen4.nat %>% mutate(Scenario = "ScenCov4"))
+full.covscen.nat <- rbind(full.scen1.nat %>% mutate(Scenario = "1 Slope"),
+                          full.scen2.nat %>% mutate(Scenario = "3 Slopes"),
+                          full.scen3.nat %>% mutate(Scenario = "4 Slopes"),
+                          full.scen4.nat %>% mutate(Scenario = "5 Slopes"))
 full.covscen.nat$order <-  ifelse(nchar(full.covscen.nat$Parameter)>4, "2nd", "1st")
 
 full.covscen.nat$CoefReg <- ifelse(grepl("\\.0",full.covscen.nat$Parameter, perl = F), "Intercept", "Slope")
 
-### Power plot(s)
+
+### General probs
+
+full.covscen.gen <- rbind(full.scen1.gen %>% mutate(Scenario = "1 Slope"),
+                          full.scen2.gen %>% mutate(Scenario = "3 Slopes"),
+                          full.scen3.gen %>% mutate(Scenario = "4 Slopes"),
+                          full.scen4.gen %>% mutate(Scenario = "5 Slopes"))
+
+full.covscen.mar <- rbind(full.scen1.mar %>% mutate(Scenario = "1 Slope"),
+                          full.scen2.mar %>% mutate(Scenario = "3 Slopes"),
+                          full.scen3.mar %>% mutate(Scenario = "4 Slopes"),
+                          full.scen4.mar %>% mutate(Scenario = "5 Slopes"))
+
+
+### Power plot(s) ------
 
 
 # Colour by Coeficent Regression type (Int v Slope) facet by Scenario
-ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope"), 
+ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope")%>% filter(n.sites >33), 
        aes(x = log(n.sites), y = PWR, group = interaction(Parameter, Lik)))+
   geom_hline(yintercept = 0.95, col = "red", linetype = "dotted")+
-  geom_line(aes( linetype = Lik, col = CoefReg))+
+  geom_line(aes( linetype = Lik, col = CoefReg), lwd = 0.8)+
   facet_grid(Scenario~Lik)+
   labs(x = "Log(Number of Sites)", y = "Power (Type I error)")+
   scale_y_continuous(labels = scales::percent_format())+
-  scale_colour_manual(values = cbbPalette[c(4, 8)])
+  scale_colour_manual(values = cbbPalette[c(5, 6)])+
+  theme_bw()
 
 
 # Colour by effect size (Int v Slope) facet by Likelihood
-ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope"), 
+ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope")%>%
+         filter(n.sites >33), 
        aes(x = log(n.sites), y = PWR, group = interaction(Parameter, Lik)))+
-  geom_hline(yintercept = 0.95, col = "red", linetype = "dotted")+
-  geom_line(aes( linetype = Lik, col = abs(og.val)))+
-  facet_grid(Scenario~Lik)+
-  labs(x = "Log(Number of Sites)", y = "Power (Type I error)", col = "Effect Size")+
-  scale_y_continuous(labels = scales::percent_format())+
-  scale_colour_viridis_c()
+  geom_hline(yintercept = 0.95, linetype = "dashed", col = "black", lwd = 0.15)+
+  geom_line(aes(col = abs(og.val)), lwd = 0.3)+
+  # geom_point(size = 0.4,
+  #            aes(col = abs(og.val)))+
+  facet_grid(Scenario~Lik, labeller = labeller(Lik = lik_labels))+
+  labs(x = "Number of Sites", y = "Power", col = "Effect Size")+ guides(alpha = "none")+
+  coord_cartesian(ylim =  c(0, 1))+
+  scale_x_continuous(breaks = log(nsites), labels = nsites)+
+  scale_y_continuous(labels = scales::percent_format() )+
+  scale_colour_gradientn(colours =safe_colorblind_palette[2:5] )+
+  # scale_colour_viridis_c()+
+  theme_bw()+
+  theme(strip.text.y = element_text(size = 3.5, color = "black",  margin = margin(r = 2, l = 2)),
+        strip.text.x = element_text(size = 3.5, color = "black", margin = margin(b = 2, t = 2)),
+        axis.text.y = element_text(size = 3.5, color = "black"),
+        axis.text.x =element_text(size = 3, color = "black") ,
+        axis.title.x = element_text(size = 4, color = "black") ,
+        axis.title.y = element_text(size = 4, color = "black"),
+        legend.text = element_text(size = 3, margin = margin(l = 2)),
+        legend.title = element_text(size = 4, margin = margin(b = 2) ),
+        legend.box.spacing = unit(1, "mm"),
+        legend.key.spacing.y = unit(0, "mm"),
+        legend.key.size = unit(2,"mm"),
+        legend.spacing.x = unit(0.1, "mm"),
+        panel.spacing=unit(0.2, "mm"))
+
+
+ggsave("Figures/CovariatesAllScenarios_Power_EffectSize_54min.jpeg",
+       width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
 
 # Colour by natural parameter order type (Int v Slope) facet by Scenario
-ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope"), 
+ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope")%>% filter(n.sites >33), 
        aes(x = log(n.sites), y = PWR, group = interaction(Parameter, Lik)))+
   geom_hline(yintercept = 0.95, col = "red", linetype = "dotted")+
-  geom_line(aes( linetype = Lik, col = order))+
-  facet_grid(Scenario~Lik)+
-  labs(x = "Log(Number of Sites)", y = "Power (Type I error)")+
-  scale_y_continuous(labels = scales::percent_format())+
-  scale_colour_manual(values = cbbPalette[c(4, 8)])
-
-
-
-## Bias plots
-### Natural parameters 
-ggplot(full.covscen.nat, 
-       aes(x = log(n.sites), y = mu.p.bias, group = interaction(Parameter, Lik)))+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "black")+
-  geom_line(aes(col = interaction(order, Lik)))+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased"),
-                 col = interaction(order, Lik)))+
-  scale_alpha_manual(values = c(1, 0.3))+
-  facet_grid(Scenario~Lik)+
-  labs(x = "Log(Number of Sites)", y = "Relative Bias", col = "Order-Likelihood")+ guides(alpha = "none")+
-  coord_cartesian(ylim =  c(-1.5, 1.5))+
+  geom_line(aes( col = order), lwd = 0.8)+
+  facet_grid(Scenario~Lik, labeller = labeller(Lik = lik_labels))+
+  labs(x = "Number of Sites", y = "Power", col = "Effect Size")+ guides(alpha = "none")+
+  coord_cartesian(ylim =  c(0, 1))+
+  scale_x_continuous(breaks = log(nsites), labels = nsites)+
   scale_y_continuous(labels = scales::percent_format() )+
-  scale_colour_manual(values = cbbPalette[c(4:9)])
+  scale_colour_manual(values =  safe_colorblind_palette[8:9] )+
+  # scale_colour_viridis_c()+
+  theme_bw()+
+  theme(strip.text.y = element_text(size = 3.5, color = "black",  margin = margin(r = 2, l = 2)),
+        strip.text.x = element_text(size = 3.5, color = "black", margin = margin(b = 2, t = 2)),
+        axis.text.y = element_text(size = 3.5, color = "black"),
+        axis.text.x =element_text(size = 3, color = "black") ,
+        axis.title.x = element_text(size = 4, color = "black") ,
+        axis.title.y = element_text(size = 4, color = "black"),
+        legend.text = element_text(size = 3, margin = margin(l = 2)),
+        legend.title = element_text(size = 4, margin = margin(b = 2) ),
+        legend.box.spacing = unit(1, "mm"),
+        legend.key.spacing.y = unit(0, "mm"),
+        legend.key.size = unit(2,"mm"),
+        legend.spacing.x = unit(0.1, "mm"),
+        panel.spacing=unit(0.2, "mm"))
 
 
 
+## Bias plots -----
+### Natural parameters ----
+ggplot(full.covscen.nat%>% filter(n.sites >33), 
+       aes(x = log(n.sites), y = mu.p.bias, group = interaction(Parameter, Lik)))+
+  geom_rect(aes(xmin = 2.5, xmax = 8.5, ymin = -0.05, ymax = 0.05), fill = "grey90",
+            inherit.aes = F, alpha = 0.9)+
+  geom_hline(yintercept = 0, linetype = "dashed", col = "black", lwd = 0.15)+
+  geom_line(aes(col = interaction(order)), lwd = 0.3)+
+  # geom_point(size = 0.4,
+  #            aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased"),
+  #                col = interaction(order)))+
+  scale_alpha_manual(values = c(1, 0.3))+
+  facet_grid(Scenario~Lik, labeller = labeller(Lik = lik_labels))+
+  labs(x = "Number of Sites", y = "Relative Bias", col = "Order")+ guides(alpha = "none")+
+  coord_cartesian(ylim =  c(-.5, .5), xlim = c(4, 8))+
+  scale_x_continuous(breaks = log(nsites), labels = nsites)+
+  scale_y_continuous(labels = scales::percent_format() )+
+  scale_colour_manual(values = cbbPalette[c(6:7)])+
+  theme_bw()  +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text.y = element_text(size = 3.5, color = "black",  margin = margin(r = 2, l = 2)),
+        strip.text.x = element_text(size = 3.5, color = "black", margin = margin(b = 2, t = 2)),
+        axis.text.y = element_text(size = 3.5, color = "black"),
+        axis.text.x =element_text(size = 3, color = "black") ,
+        axis.title.x = element_text(size = 4, color = "black") ,
+        axis.title.y = element_text(size = 4, color = "black"),
+        legend.text = element_text(size = 3, margin = margin(l = 2)),
+        legend.title = element_text(size = 4, margin = margin(b = 2) ),
+        legend.box.spacing = unit(1, "mm"),
+        legend.key.spacing.y = unit(0, "mm"),
+        legend.key.size = unit(2,"mm"),
+        legend.spacing.x = unit(0.1, "mm"),
+        panel.spacing=unit(0.2, "mm"))
 
 
+ggsave("Figures/CovariatesAllScenarios_NatPamRB_Order_54min.jpeg",
+       width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
+
+## Marginal probs ----
+
+ggplot(full.covscen.mar, 
+       aes(x = log(n.sites), y = mu.p.bias,
+           col = Species, group = interaction(Scenario, Species)))+
+  geom_rect(aes(xmin = 2.5, xmax = 8.5, ymin = -0.05, ymax = 0.05), fill = "grey90",
+            inherit.aes = F, alpha = 0.7)+
+  geom_hline(yintercept = 0, linetype = "dashed", col = "black")+
+  geom_line(data = full.covscen.gen,
+            aes(x = log(n.sites), y =mu.p.bias, group = Gen.Par), col = "grey65", lwd = 0.2)+
+  geom_line(lwd = 0.3)+
+  scale_alpha_manual(values = c(1, 0.3))+labs(alpha = "RB>0.05")+
+  facet_grid(Scenario~Lik, labeller = labeller(Lik = lik_labels))+
+  labs(x = "Number of Sites", y = "Mean Relative Bias (RB)", col = "Species")+
+  scale_colour_manual(values= c(safe_colorblind_palette[-1]))+
+  coord_cartesian(ylim =  c(-0.2, 0.2),  xlim = c(4, 8))+
+  theme_bw()+guides(alpha = "none")+
+  scale_x_continuous(breaks = log(nsites), labels = nsites)+
+  scale_y_continuous(labels = scales::percent_format() )+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text.y = element_text(size = 3.5, color = "black",  margin = margin(r = 2, l = 2)),
+        strip.text.x = element_text(size = 3.5, color = "black", margin = margin(b = 2, t = 2)),
+        axis.text.y = element_text(size = 3.5, color = "black"),
+        axis.text.x =element_text(size = 3, color = "black") ,
+        axis.title.x = element_text(size = 4, color = "black") ,
+        axis.title.y = element_text(size = 4, color = "black"),
+        legend.text = element_text(size = 3, margin = margin(l = 2)),
+        legend.title = element_text(size = 4, margin = margin(b = 2) ),
+        legend.box.spacing = unit(1, "mm"),
+        legend.key.spacing.y = unit(0, "mm"),
+        legend.key.size = unit(2,"mm"),
+        legend.spacing.x = unit(0.1, "mm"),
+        panel.spacing=unit(0.2, "mm"))
 
 
-
-### Cowplot parade! ----
-
-## Bias plots ----
-
-### Natural parameters 
-#### Positive scenarios
-cowplot::plot_grid(g1.nat+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank())+
-                     guides(alpha = "none"),
-                   g2.nat+guides(col = "none"), nrow = 2)
-
-#### Negative scenarios
-cowplot::plot_grid(g3.nat+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank()),
-                   g4.nat, nrow = 2)
-
-
-### General parameters 
-#### Positive scenarios
-cowplot::plot_grid(g1.gen+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank()),
-                   g2.gen, nrow = 2)
-
-#### Negative scenarios
-cowplot::plot_grid(g3.gen+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank()),
-                   g4.gen, nrow = 2)
-
-## Power plots ----
-
-cowplot::plot_grid(g1.pwr+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank(),
-                                legend.position = "none"),
-                   g2.pwr+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank(),
-                                axis.text.y = element_blank(),
-                                axis.title.y = element_blank()),
-                   g3.pwr+theme(legend.position = "none"), g4.pwr+theme(axis.text.y = element_blank(),
-                                                                        axis.title.y = element_blank()), nrow = 2)
-
-
-###  Marginal probabilities
-#### Positive scenarios
-cowplot::plot_grid(g1.mar+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank()),
-                   g2.mar, nrow = 2)
-
-#### Negative scenarios
-cowplot::plot_grid(g3.mar+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank()),
-                   g4.mar, nrow = 2)
-
-
-
-###  Conditional probabilities
-#### Positive scenarios
-cowplot::plot_grid(g1.con+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank()),
-                   g2.con, nrow = 2)
-
-#### Negative scenarios
-cowplot::plot_grid(g3.con+theme(axis.title.x = element_blank(),
-                                axis.text.x = element_blank()),
-                   g4.con, nrow = 2)
-
+ggsave("Figures/CovariatesAllScenarios_MargProbRB_54min.jpeg",
+       width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
 
 
 
