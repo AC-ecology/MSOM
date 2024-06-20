@@ -1826,7 +1826,7 @@ kable_out1 <- kableExtra::kbl(natgen.wide3, booktabs = T,
   column_spec(1, bold = T)
 
 # Loop over columns for column_spec
-for (col_num in 2:ncol(natgen.wide1)) {
+for (col_num in 2:ncol(natgen.wide3)) {
   
   kable_out1 <- kableExtra::column_spec(kable_out1,
                                        col_num,
