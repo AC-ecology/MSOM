@@ -74,7 +74,7 @@ seed = 1337
 scen1 <- MSOM_simfit.fun.v2(beta = beta, 
                             nsites = nsites, occ_formulas = occ_formulas,
                             det_formulas = det_formulas,
-                            nspecies = nspecies, seed = seed, nsim = nsim, J = J)
+                            nspecies = nspecies, seed = seed, nsim = nsim, J = J, sim.only = T)
 
 scenario <- "Scenario1"
 model.type = "Null"
@@ -113,7 +113,7 @@ model.type = "Null"
 saveRDS(object = scen2,file = paste0(scenario, model.type, "seed", seed,
                                     "_simResults_v2.rds" ))
 
-# Scenario 3: Null model with weak positive interaction  ------
+# Scenario 3: Null model with strong negative interaction  ------
 # Parameter definition:
 # First order natural parameter f1: log-odds of presence of sp1 
 ## beta1: baseline occupancy of sp1 
@@ -142,7 +142,7 @@ model.type = "Null"
 saveRDS(object = scen3,file = paste0(scenario, model.type, "seed", seed,
                                      "_simResults_v2.rds" ))
 
-# Scenario 4: Null model with weak positive interaction  ------
+# Scenario 4: Null model with weak negative interaction  ------
 # Parameter definition:
 # First order natural parameter f1: log-odds of presence of sp1 
 ## beta1: baseline occupancy of sp1 
@@ -159,8 +159,8 @@ beta12 <- -0.2 # decrease log-odds by 18%
 beta = list(beta1, beta2, beta12)
 
 scen4 <- MSOM_simfit.fun.v2(beta = beta, 
-                            nsites = nsites, 
-                            nspecies = nspecies, seed = 1337, nsim = nsim, J = J)
+                            nsites = 30, 
+                            nspecies = nspecies, seed = 1337, nsim = 5, J = J)
 
 
 
@@ -169,6 +169,102 @@ model.type = "Null"
 
 saveRDS(object = scen4,file = paste0(scenario, model.type, "seed", seed,
                                      "_simResults_v2.rds" ))
+
+
+
+
+
+
+# Scenario 5: Null model with mid positive interaction  ------
+
+
+ln.sites <- seq(3, 8, by = 0.5)
+nsites <- as.integer(exp(ln.sites))
+exp(ln.sites)
+
+
+# Number of simulations (nsim) per sample size in N: 100
+nsim <- 100
+
+# Number of visits (J): 3
+J <- 3
+
+
+ok <- scen5$State.params %>%group_by(n.sites, Parameter) %>% summarise(count = n())
+# Number of species (nspecies): 2
+nspecies <- 2
+
+# Detection probabilities are equal for both spp & kept constant across all scenarios
+p_true <- rep(0.5, nspecies) # 50% detection probability
+
+### occ_formulas: formulas for the 2^nspecies-1 linear predictors of occupancy & 
+###               co-occurrence. Null models specified with "~1" in each linear predictor
+occ_formulas = rep("~1", 2^nspecies-1) 
+
+### det formulas: formulas for the nspecieslinear predictors of detection.
+###               Null models specified with "~1" in each linear predictor
+det_formulas = rep("~1", nspecies)
+
+# Parameter definition:
+# First order natural parameter f1: log-odds of presence of sp1 
+## beta1: baseline occupancy of sp1 
+beta1 <-  -0.2 # (~50%)
+
+# First order natural parameter f2: log-odds of presence of sp2 
+## beta2: baseline occupancy of sp2, assumed equal to sp1
+beta2 <-  -0.2 # (~50%)
+
+# Second order natural parameter f12: log-odds of co-occurrene of sp1 & sp2
+## beta12: baseline log-odds of co-occurrence
+beta12 <- 0.6 # decrease log-odds by 18%
+
+beta = list(beta1, beta2, beta12)
+
+seed = 1337
+scen5 <- MSOM_simfit.fun.v2(beta = beta, 
+                            nsites = nsites, 
+                            nspecies = nspecies, 
+                            seed = 1337, nsim = nsim, J = J)
+
+
+
+scenario <- "Scenario5_MidPos"
+model.type = "Null"
+
+saveRDS(object = scen5,file = paste0(scenario, model.type, "seed", seed,
+                                     "_simResults_v2.rds" ))
+
+
+# Scenario 6: Null model with mid negative interaction  ------
+# Parameter definition:
+# First order natural parameter f1: log-odds of presence of sp1 
+## beta1: baseline occupancy of sp1 
+beta1 <-  0.2 # (~50%)
+
+# First order natural parameter f2: log-odds of presence of sp2 
+## beta2: baseline occupancy of sp2, assumed equal to sp1
+beta2 <-  0.2 # (~50%)
+
+# Second order natural parameter f12: log-odds of co-occurrene of sp1 & sp2
+## beta12: baseline log-odds of co-occurrence
+beta12 <- -0.6 # decrease log-odds by 18%
+
+beta = list(beta1, beta2, beta12)
+seed = 1337
+scen6 <- MSOM_simfit.fun.v2(beta = beta, 
+                            nsites = nsites, 
+                            nspecies = nspecies, seed = 1337, nsim = nsim, J = J)
+
+
+
+scenario <- "Scenario6_MidNeg"
+model.type = "Null"
+
+saveRDS(object = scen6,file = paste0(scenario, model.type, "seed", seed,
+                                     "_simResults_v2.rds" ))
+
+scen6$time.ellapsed
+
 
 ## Covariate models --------------
 

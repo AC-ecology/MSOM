@@ -123,8 +123,10 @@ crv.Clipp21 <- function(l, data, M = 5){
 MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
                                p_true= c(0.5, 0.5) ,
                                occ_formulas = NULL,
-                               det_formulas = NULL, nsim =100, seed = NULL) {
+                               det_formulas = NULL, nsim =100,
+                               seed = NULL, store.data = T, sim.only = F) {
   
+  if(!store.data & sim.only) stop("Error: Cannot simulate data only and not store it")
   if(!is.list(beta) | length(beta) != (nspecies+nspecies*(nspecies-1)/2)){ 
     stop("Error: beta should be a list with length = nspecies+nspecies*(nspecies-1)/2")
   }
@@ -138,7 +140,7 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
   if(is.null(occ_formulas))  occ_formulas = rep("~1", nspecies+ncol(combn(1:nspecies, 2)))
   if(is.null(det_formulas))  det_formulas = rep("~1", nspecies)
   
-  
+  # nsites = 50; nsim = 2
   for(N in nsites){
     occ_covs <- as.data.frame(matrix(rnorm(N * nocc_covs),ncol=nocc_covs))
     names(occ_covs) <- paste('occ_cov',1:nocc_covs,sep='')
@@ -211,6 +213,8 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
         }
       }
       
+      if(any(colSums(ztruth) == 0)) next
+      
       
       # fake y data
       y <- list()
@@ -224,55 +228,66 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
         }
       }
       
-      
+      if(any(lapply(y, sum) == 0)) next
       names(y) <- paste0('sp', 1:nspecies)
       data <- unmarkedFrameOccuMulti(y=y,siteCovs=occ_covs,obsCovs=det_covs)
       
-      print(paste0("SIMULATION ITERATION: ", s))
-      # Without penalty
-      fit <-try(occuMulti(det_formulas,occ_formulas,data, maxOrder = 2))
-      if(class(fit) %in% "try-error") next
-      fit_sum <-summary(fit)
+      if(!sim.only){
       
-      mod.conv <- ifelse(fit@opt$convergence==0 , 1, 0)
-  
-      
-      
-      # with penalty (if boundary estimates run CV code from Clipp 2021)
-      fit_pl <- try(optimizePenalty(fit))
-      
-      if("try-error" %in% class(fit_pl)){
+        print(paste0("SIMULATION ITERATION: ", s))
+        # Without penalty
+        fit <-try(occuMulti(det_formulas,occ_formulas,data, maxOrder = 2))
+        if(class(fit) %in% "try-error") next
+        fit_sum <-summary(fit)
         
-        lam <- c(0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12)
+        mod.conv <- ifelse(fit@opt$convergence==0 , 1, 0)
+    
         
-        fit.ll <- numeric(length(lam))
         
-        for(l in 1:length(lam)){
-          fit.ll[l] <- tryCatch(crv.Clipp21(l = lam[l], data = data, M = 5), 
-                                error = function(e) rep(NA, 1))
+        # with penalty (if boundary estimates run CV code from Clipp 2021)
+        fit_pl <- try(optimizePenalty(fit))
+        
+        if("try-error" %in% class(fit_pl)){
+          
+          lam <- c(0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12)
+          
+          fit.ll <- numeric(length(lam))
+          
+          for(l in 1:length(lam)){
+            fit.ll[l] <- tryCatch(crv.Clipp21(l = lam[l], data = data, M = 5), 
+                                  error = function(e) rep(NA, 1))
+            if("try-error" %in% class(fit.ll[l])) next
+          }
+          
           if("try-error" %in% class(fit.ll[l])) next
+          
+          if(!all(is.na(fit.ll))){
+            pen.val <- lam[which(fit.ll == max(fit.ll, na.rm = T))]
+          } else{next}
+          fit_pl <- occuMulti(det_formulas,occ_formulas,data, 
+                              maxOrder = 2, penalty = pen.val, boot = 100)
+          
+          pen.est <- "CrossV"
+        } else{
+          # fit_pl <- optimizePenalty(fit)
+          pen.val <- as.numeric(as.character(fit_pl@call['penalty']))
+          pen.est <- "optPen"
         }
+        fit_pl.sum <- summary(fit_pl)
         
-        if("try-error" %in% class(fit.ll[l])) next
+        mod.conv_pl <- ifelse(fit_pl@opt$convergence==0, 1, 0)
         
-        if(!all(is.na(fit.ll))){
-          pen.val <- lam[which(fit.ll == max(fit.ll, na.rm = T))]
-        } else{next}
-        fit_pl <- occuMulti(det_formulas,occ_formulas,data, 
-                            maxOrder = 2, penalty = pen.val, boot = 100)
-        
-        pen.est <- "CrossV"
-      } else{
-        # fit_pl <- optimizePenalty(fit)
-        pen.val <- as.numeric(as.character(fit_pl@call['penalty']))
-        pen.est <- "optPen"
-      }
-      fit_pl.sum <- summary(fit_pl)
-      
-      mod.conv_pl <- ifelse(fit_pl@opt$convergence==0, 1, 0)
-      
-      
+      } # sim.only?
       if(s == 1){
+        if(store.data){
+          y.dat <- data
+          z.dat <- cbind(ztruth, nsim = s, n.sites = N)
+        }
+      if(sim.only) {
+        s <- s + 1
+      next
+      }
+
         #  Without penalisation
         ## Detection parameters and data frames
         det_df <- fit_sum$det
@@ -308,6 +323,16 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
         state_df.pl$pen.est <- pen.est
         
       } else {
+        if(store.data){
+          y.dat <-c(y.dat,  data)
+          z.dat <- rbind(z.dat, cbind(ztruth, nsim = s, n.sites = N))
+        }
+        if(sim.only)  {
+          s <- s + 1
+          next
+        }
+        
+        
         #  Without penalisation
         ## Detection parameters and data frames
         det_df1 <- fit_sum$det
@@ -359,6 +384,12 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
     state_df.pl$n.sites <- N
     
     if(N == nsites[1]){
+      if(store.data){
+        y.dat.full <- y.dat
+        z.dat.full <- z.dat
+      }
+      if(sim.only) next
+      
       # Without penalisation
       N_det_df <- det_df
       N_state_df <- state_df
@@ -368,6 +399,12 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
       N_state_df.pl <- state_df.pl
       
     } else{
+      if(store.data){
+        y.dat.full <- c(y.dat.full, y.dat)
+        z.dat.full <- rbind(z.dat.full, z.dat)
+      }
+      if(sim.only) next
+      
       N_det_df <- rbind(N_det_df, det_df)
       N_state_df <- rbind(N_state_df, state_df)
       
@@ -376,12 +413,23 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
       N_state_df.pl <- rbind(N_state_df.pl, state_df.pl)
     }
   }# N?
-  
   diff_time <- Sys.time()-init.time
   
-  return(out = list(Detection.Params = N_det_df, State.params = N_state_df, 
-                    Detection.Params.PL = N_det_df.pl, State.params.pl =N_state_df.pl,
-                    time.ellapsed = diff_time))
+  
+  if(sim.only){ return(out = list(z.truth = z.dat.full, sim.dat = y.dat.full,
+                                  time.ellapsed = diff_time))}
+  
+  if(store.data){
+    out = list(Detection.Params = N_det_df, State.params = N_state_df, 
+             Detection.Params.PL = N_det_df.pl, State.params.pl =N_state_df.pl,
+             z.truth = z.dat.full, sim.dat = y.dat.full,
+             time.ellapsed = diff_time)
+  } else{
+    out = list(Detection.Params = N_det_df, State.params = N_state_df, 
+               Detection.Params.PL = N_det_df.pl, State.params.pl =N_state_df.pl,
+               time.ellapsed = diff_time)
+  }
+  return(out = out)
 }
 
 
