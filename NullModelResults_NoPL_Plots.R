@@ -1590,8 +1590,9 @@ full.scen.mar <- rbind(Marg.prob1.sum, Marg.prob2.sum, Marg.prob5.sum,
 full.scen.mar$Scenario <- rep(paste0("Scenario", c(1, 2, 5, 3, 4, 6)), each = nrow(Marg.prob1.sum))
 full.scen.mar$IntStrength <- rep(c("Strong", "Weak", "Moderate" , "Strong", "Weak",  "Moderate"), each = nrow(Marg.prob1.sum))
 full.scen.mar$IntType <- rep(c("Positive interaction ", "Negative interaction"), each = nrow(Marg.prob1.sum)*3)
-
-##### Marginal Probabilities
+full.scen.mar$Prob <- full.scen.mar$Species
+full.scen.mar$ProbType <- "Marginal"
+##### Conditional Probabilities
 full.scen.con <- rbind(Cond.prob1.sum, Cond.prob2.sum, Cond.prob5.sum,
                        Cond.prob3.sum, Cond.prob4.sum, Cond.prob6.sum)
 full.scen.con$Scenario <- rep(paste0("Scenario", c(1, 2, 5, 3, 4, 6)), 
@@ -1602,8 +1603,8 @@ full.scen.con$IntType <- rep(c("Positive interaction ", "Negative interaction"),
                              each = nrow(Cond.prob5.sum)*3)
 
 
-
-
+full.scen.con$Prob <- full.scen.con$Cond.prob
+full.scen.con$ProbType <- "Conditional"
 
 #### Generally Natural (combo) 
 
@@ -1615,9 +1616,153 @@ full.scen.natgen <- rbind(full.scen.nat[, shared_cols],full.scen.gen[,shared_col
 full.scen.natgen$Param.Type <- c(rep("Natural", nrow(full.scen.nat)),
                                  rep("General", nrow(full.scen.gen)))
 
+#### Marginally conditional (combo)
+
+shared_cols1 <- intersect(colnames(full.scen.con), colnames(full.scen.mar))
+full.scen.mar.con <-  rbind(full.scen.mar[, shared_cols1],full.scen.con[,shared_cols1])
+
 
 ### Let's make a fancy bias table whoop whoop ------
 library(kableExtra)
+
+colfunc<-colorRampPalette(c("red","yellow","#71C93F"))
+colfunc<-colorRampPalette(c("red","pink"))
+
+Col.pallete <- c(colfunc(5), "white") # n = number of steps (sequentially change)
+Col.pallete.red <- alpha("red", seq(0.9, 0.4, length.out = 5)) 
+table.color <- function(x){ case_when(
+  abs(x) <= 5~ Col.pallete[6],
+  abs(x) > 5 & abs(x) <=15 ~ Col.pallete[5],
+  abs(x) > 15 & abs(x) <=35 ~ Col.pallete[4],
+  abs(x) > 35 & abs(x) <=75 ~ Col.pallete[3],
+  abs(x) > 75 & abs(x) <100 ~ Col.pallete[2],
+  abs(x) >= 100 ~ Col.pallete[1]
+)}
+
+# table.color <- function(x){ case_when(
+#   abs(x) <= 10~ Col.pallete[6],
+#   abs(x) > 10 & abs(x) <=25 ~Col.pallete[5],
+#   abs(x) > 25 & abs(x) <=50 ~ Col.pallete[4],
+#   abs(x) > 50 & abs(x) <=75 ~ Col.pallete[3],
+#   abs(x) > 75 & abs(x) <100 ~ Col.pallete[2],
+#   abs(x) >= 100 ~ Col.pallete[1]
+# )}
+
+table.color.red <- function(x){ case_when(
+  abs(x) <= 10 ~ "white",
+  abs(x) > 10 & abs(x) <=25 ~ Col.pallete.red[5],
+  abs(x) > 25 & abs(x) <=50 ~ Col.pallete.red[4],
+  abs(x) > 50 & abs(x) <=75 ~ Col.pallete.red[3],
+  abs(x) > 75 & abs(x) <100 ~ Col.pallete.red[2],
+  abs(x) >= 100 ~ Col.pallete.red[1]
+)}
+scales::show_col(Col.pallete)
+scales::show_col(alpha("red", seq(0.9, 0.4, length.out = 5)))
+
+
+### Gen.Nat Long Table 1  --------------
+
+natgen.long <- full.scen.natgen %>% 
+  select(n.sites, IntType, IntStrength,  Parameter, Param.Type, mu.p.bias) %>%
+  mutate(mu.p.bias = round(mu.p.bias*100, 2),
+         IntType = ifelse(grepl("Positive",IntType), "pos", "neg"),
+         IntStrength = factor(substr(IntStrength, 1, 1), levels = c("W", "M", "S"))) %>%
+  pivot_wider(names_from = c(Param.Type, Parameter), values_from = mu.p.bias) %>%
+  arrange(IntType, IntStrength )
+
+order.vec1 <- c(rep(0, 3), 0, 1, -1,0, 1, -1, 0)
+
+
+natgen.long1 <- natgen.long[c(1:ncol(natgen.long)+order.vec1)]
+
+natgen.long.pos <- natgen.long1 %>% filter(IntType == "pos")
+
+# Store table to be worked on
+library(kableExtra)
+kable_out <- kableExtra::kbl(natgen.long1, booktabs = T, 
+                             col.names = c("N", "Direction", "Strength", rep(c("f1", "f2", "f12"), 1),
+                                           rep(c("00", "10", "01", "11"), 1)),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2:3,latex_hline = "major", row_group_label_position = "first") 
+
+# Loop over columns for column_spec
+for (col_num in 4:ncol(natgen.long1)) {
+  
+  kable_out <- kableExtra::column_spec(kable_out,
+                                       col_num,
+                                       background =  unlist(lapply(natgen.long1[[col_num]],function(x) table.color(x) )))
+}
+
+kable_out
+
+
+###### Without moderate and only positive ----
+
+natgen.long.sub <- natgen.long1 %>% 
+  filter(IntStrength  != "M" & IntType == "neg") %>%
+  select(-IntType)
+kable_out <- kableExtra::kbl(natgen.long.sub, booktabs = T, 
+                             col.names = c("N","Strength", rep(c("f1", "f2", "f12"), 1),
+                                           rep(c("00", "10", "01", "11"), 1)),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  add_header_above(c(" ", "", "Natural" = 3, "General" = 4)) %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2:3,latex_hline = "major", row_group_label_position = "first") 
+
+# Loop over columns for column_spec
+for (col_num in 3:ncol(natgen.long.sub)) {
+  
+  kable_out <- kableExtra::column_spec(kable_out,
+                                       col_num,
+                                       background =  unlist(lapply(natgen.long.sub[[col_num]],function(x) table.color(x) )))
+}
+
+kable_out
+
+
+#### Mar-Con table! ------------
+
+marcon.long <- full.scen.mar.con %>% 
+  select(n.sites, IntType, IntStrength,  Prob, mu.p.bias) %>%
+  mutate(mu.p.bias = round(mu.p.bias*100, 2),
+         IntType = ifelse(grepl("Positive",IntType), "pos", "neg"),
+         IntStrength = factor(substr(IntStrength, 1, 1), levels = c("W", "M", "S"))) %>%
+  pivot_wider(names_from = c(Prob), values_from = mu.p.bias) %>%
+  arrange(IntType, IntStrength )
+
+mar.con.sub <- marcon.long %>%
+  filter(IntStrength  != "M" & IntType == "neg") %>%
+  select(-IntType)
+
+### Table 
+
+colnames(mar.con.sub)
+kable_out <- kableExtra::kbl(mar.con.sub, booktabs = T, 
+                             col.names = c("N","Strength", colnames(mar.con.sub)[-c(1:2)]),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  add_header_above(c(" ", "", "Marginal" = 2, "Conditional" = 4)) %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2:3,latex_hline = "major", row_group_label_position = "first") 
+
+# Loop over columns for column_spec
+for (col_num in 3:ncol(mar.con.sub)) {
+  
+  kable_out <- kableExtra::column_spec(kable_out,
+                                       col_num,
+                                       background =  unlist(lapply(mar.con.sub[[col_num]],function(x) table.color(x) )))
+}
+
+kable_out
+
+#### Wide Table(s)  --------------
+
 natgen.wide <- full.scen.natgen %>% 
   select(n.sites, IntStrength, IntType, Parameter, Param.Type, mu.p.bias) %>%
   mutate(mu.p.bias = round(mu.p.bias*100, 2),
@@ -1638,7 +1783,6 @@ natgen.wide <- full.scen.natgen %>%
 
 order.vec <- c(0, rep(c(0, 1, -1), 6), rep(c(0, 1, -1,0), 6))
 natgen.wide1 <- natgen.wide[c(1:ncol(natgen.wide)+order.vec)]
-
 
 kbl(natgen.wide1, booktabs = T, 
     col.names = c("N", rep(c("f1", "f2", "f12"), 6),
@@ -1658,30 +1802,11 @@ kbl(natgen.wide1, booktabs = T,
   kable_classic()
 
 
-colfunc<-colorRampPalette(c("red","yellow","#71C93F"))
-
-Col.pallete <- alpha(colfunc(6), 0.5) # n = number of steps (sequentially change)
-
-table.color <- function(x){ case_when(
-  abs(x) <= 5~ Col.pallete[6],
-  abs(x) > 5 & abs(x) <=15 ~ Col.pallete[5],
-  abs(x) > 15 & abs(x) <=35 ~ Col.pallete[4],
-  abs(x) > 35 & abs(x) <=75 ~ Col.pallete[3],
-  abs(x) > 75 & abs(x) <100 ~ Col.pallete[2],
-  abs(x) >= 100 ~ Col.pallete[1]
-)}
-scales::show_col(Col.pallete)
 
 
 ## Test
 colorines <- unlist(lapply(ok[,2],function(x) table.color(x) ))
 
-kbl(ok, booktabs = T, escape = F) %>% 
-  column_spec(column = c(2), background =colorines )%>%
-  kable_classic() %>%
-  kable_styling(latex_options = c("scale_down")) 
-
-  
 
 # Store table to be worked on
 kable_out <- kableExtra::kbl(natgen.wide1, booktabs = T, 
@@ -1780,7 +1905,7 @@ for (col_num in 2:ncol(natgen.wide1)) {
 kable_out
 
 
-##### Table without moderate scenario and changing order ----
+#### Table without moderate scenario and changing order ----------------
 
 natgen.wide2 <- full.scen.natgen %>% 
   filter(IntStrength != "Moderate") %>%
