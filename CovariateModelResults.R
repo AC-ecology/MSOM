@@ -1408,8 +1408,8 @@ ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope")%>%
         panel.spacing=unit(0.2, "mm"))
 
 
-ggsave("Figures/CovariatesAllScenarios_Power_EffectSize_54min.jpeg",
-       width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
+ggsave("Figures/CovariatesAllScenarios_Power_EffectSize_54min_v2.jpeg",
+       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
 
 # Colour by natural parameter order type (Int v Slope) facet by Scenario
 ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope")%>% filter(n.sites >33), 
@@ -1437,7 +1437,6 @@ ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope")%>% filte
         legend.key.size = unit(2,"mm"),
         legend.spacing.x = unit(0.1, "mm"),
         panel.spacing=unit(0.2, "mm"))
-
 
 
 ## Bias plots -----
@@ -1476,8 +1475,8 @@ ggplot(full.covscen.nat%>% filter(n.sites >33),
         panel.spacing=unit(0.2, "mm"))
 
 
-ggsave("Figures/CovariatesAllScenarios_NatPamRB_Order_54min.jpeg",
-       width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
+ggsave("Figures/CovariatesAllScenarios_NatPamRB_Order_54min_v2.jpeg",
+       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
 
 ## Marginal probs ----
 
@@ -1514,8 +1513,7 @@ ggplot(full.covscen.mar,
         legend.spacing.x = unit(0.1, "mm"),
         panel.spacing=unit(0.2, "mm"))
 
-
-ggsave("Figures/CovariatesAllScenarios_MargProbRB_54min.jpeg",
+ggsave("Figures/CovariatesAllScenarios_MargProbRB_54min_v2.jpeg",
        width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
 
 

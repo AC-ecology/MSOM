@@ -11,9 +11,6 @@
 ## 6. Plot with ggplot, faceting for parameter
 
 
-## The colour-blind palette with black:
-
-
 library(readr)
 library(tidyverse)
 
@@ -1620,8 +1617,6 @@ full.scen.natgen$Param.Type <- c(rep("Natural", nrow(full.scen.nat)),
 
 shared_cols1 <- intersect(colnames(full.scen.con), colnames(full.scen.mar))
 full.scen.mar.con <-  rbind(full.scen.mar[, shared_cols1],full.scen.con[,shared_cols1])
-
-
 ### Let's make a fancy bias table whoop whoop ------
 library(kableExtra)
 
@@ -1639,14 +1634,6 @@ table.color <- function(x){ case_when(
   abs(x) >= 100 ~ Col.pallete[1]
 )}
 
-# table.color <- function(x){ case_when(
-#   abs(x) <= 10~ Col.pallete[6],
-#   abs(x) > 10 & abs(x) <=25 ~Col.pallete[5],
-#   abs(x) > 25 & abs(x) <=50 ~ Col.pallete[4],
-#   abs(x) > 50 & abs(x) <=75 ~ Col.pallete[3],
-#   abs(x) > 75 & abs(x) <100 ~ Col.pallete[2],
-#   abs(x) >= 100 ~ Col.pallete[1]
-# )}
 
 table.color.red <- function(x){ case_when(
   abs(x) <= 10 ~ "white",
@@ -1762,6 +1749,8 @@ for (col_num in 3:ncol(mar.con.sub)) {
 kable_out
 
 #### Wide Table(s)  --------------
+
+
 
 natgen.wide <- full.scen.natgen %>% 
   select(n.sites, IntStrength, IntType, Parameter, Param.Type, mu.p.bias) %>%
@@ -1985,19 +1974,15 @@ for (col_num in 2:ncol(natgen.wide1)) {
                                         background =  unlist(lapply(natgen.wide3[[col_num]],function(x) table.color(x) )))
 }
 
-# N & f_1 & f_2 & f_{12} & \psi_{00} & \psi_{10} & \psi_{01} &\psi_{11} &
-#f_1 & f_2 & f_{12} & \psi_{00} & \psi_{10} & \psi_{01} &\psi_{11} &
-#f_1 & f_2 & f_{12} & \psi_{00} & \psi_{10} & \psi_{01} &\psi_{11} & 
-#f_1 & f_2 & f_{12} & \psi_{00} & \psi_{10} & \psi_{01} &\psi_{11} 
-
 ## The plot parade ----
+
+# Colourblind Palettes  
+
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
                 "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 safe_colorblind_palette <- c("#88CCEE", "#CC6677", "#DDCC77", "#117733", "#332288", "#AA4499", 
                              "#44AA99", "#999933", "#882255", "#661100", "#6699CC", "#888888")
-scales::show_col(safe_colorblind_palette)
-
 ### All Scenarios -----
 
 p.full.scen.v1 <- ggplot(full.scen.nat, aes(x = n.sites, y = mu.p.bias,

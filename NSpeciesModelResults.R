@@ -1535,8 +1535,8 @@ ggplot(full.sp.nat %>% filter(n.sites >33 & order == "2nd"),
           legend.spacing.x = unit(0.1, "mm"),
           panel.spacing=unit(0.2, "mm"))
 
-ggsave("Figures/3PlusSp_AllScenarios_Power.jpeg",
-       width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
+ggsave("Figures/3PlusSp_AllScenarios_Power_v2.1.jpeg",
+       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = "retina")
 
 
 
@@ -1594,8 +1594,8 @@ ggplot(full.sp.nat %>% filter(n.sites >33),
         legend.spacing.x = unit(0.1, "mm"),
         panel.spacing=unit(0.2, "mm"))
 
-ggsave("Figures/3PlusSp_AllScenarios_NaturalRelBias.jpeg",
-       width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
+ggsave("Figures/3PlusSp_AllScenarios_NaturalRelBias_v2.jpeg",
+       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
 
 
 ### General Parameters
@@ -1743,8 +1743,8 @@ ggplot(full.sp.mar %>% filter(n.sites >33),
         panel.spacing=unit(0.5, "mm"))
 
 
-ggsave("Figures/MultipleSpeciesAllScenarios_RelativevBias_MargProb_NsitesAxis_v1.jpeg",
-       width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
+ggsave("Figures/MultipleSpeciesAllScenarios_RelativevBias_MargProb_NsitesAxis_v2.jpeg",
+       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
 
 ### Conditionals!
 
@@ -1787,82 +1787,9 @@ ggplot(Scen5Sp ,aes(x = log(n.sites), y = mu.p.bias, group(Cond.Prob, Lik)))+
 
 
 ### Let's make a fancy table whoop whoop ------
-install.packages("kableExtra")
-library(kableExtra)
-dt <- mtcars[1:5, 1:6]
-kbl(dt, booktabs = T)
 
 
-kbl(dt, booktabs = T) %>%
-  kable_styling(latex_options = "striped")
+full.sp.gen$Parameter <- full.sp.gen$Gen.Par
 
-cs_dt <- mtcars[1:10, 1:2]
-cs_dt$car = row.names(cs_dt)
-row.names(cs_dt) <- NULL
-cs_dt$mpg = cell_spec(cs_dt$mpg, color = ifelse(cs_dt$mpg > 20, "red", "blue"))
-cs_dt$cyl = cell_spec(
-  cs_dt$cyl, color = "white", align = "c", angle = 45,
-  background = factor(cs_dt$cyl, c(4, 6, 8), c("#666666", "#999999", "#BBBBBB")))
-cs_dt <- cs_dt[c("car", "mpg", "cyl")]
-kbl(cs_dt, booktabs = T, escape = F) %>%
-  kable_paper("striped", full_width = F)
-
-kbl(dt, booktabs = T) %>%
-  kable_styling() %>%
-  add_header_above(c(" " = 1, "Group 1" = 2, "Group 2" = 2, "Group 3" = 2))
-kbl(dt, booktabs = T) %>%
-  kable_styling(latex_options = "striped") %>%
-  add_header_above(c(" ", "Group 1" = 2, "Group 2" = 2, "Group 3" = 2)) %>%
-  add_header_above(c(" ", "Group 4" = 4, "Group 5" = 2)) %>%
-  add_header_above(c(" ", "Group 6" = 6), bold = T, italic = T)
-
-## Pivot wider
-
-
-library(tidyverse)
-
-full.sp.mar.wide <- full.sp.mar %>%
-  mutate(mu.p.bias = round(mu.p.bias, 3)) %>%
-  select(n.sites, Scenario, Species, mu.p.bias, Lik) %>%
-  pivot_wider(names_from = Species, values_from = mu.p.bias)
-
-
-full.sp.mar.widew <- full.sp.mar %>%
-  mutate(mu.p.bias = round(mu.p.bias, 3)) %>%
-  select(n.sites, Scenario, Species, mu.p.bias, Lik) %>%
-  pivot_wider(names_from = c(Lik, Species), values_from = c(mu.p.bias))
-
-full.sp.mar.widew %>% select(order(colnames(full.sp.mar.widew[-(1:2)])))
-
-tidyr::pivot_wider(df, names_from = group, values_from = c(dummy, v1, v2))
-collapse_rows_dt <- expand.grid(
-  District = sprintf('District %s', c('1', '2')),
-  City = sprintf('City %s', c('1', '2')),
-  State = sprintf('State %s', c('a', 'b')),
-  Country = sprintf('Country with a long name %s', c('A', 'B'))
-)
-collapse_rows_dt <- collapse_rows_dt[c("Country", "State", "City", "District")]
-collapse_rows_dt$C1 = rnorm(nrow(collapse_rows_dt))
-collapse_rows_dt$C2 = rnorm(nrow(collapse_rows_dt))
-
-
-row_group_label_fonts <- list(
-  list(bold = T, italic = T),
-  list(bold = F, italic = F)
-)
-kbl(collapse_rows_dt,
-    booktabs = T, align = "c", linesep = '', format = 'latex') %>%
-  column_spec(1, bold=T) %>%
-  collapse_rows(1:3, latex_hline = 'custom', custom_latex_hline = 1:3,
-
-                row_group_label_position = 'stack',
-                row_group_label_fonts = row_group_label_fonts)
-
-
-kbl(full.sp.mar.wide,
-    booktabs = T, align = "c", linesep = '') %>%
-  collapse_rows(1:2, row_group_label_position = 'stack')
-
-
-
-
+intersect(colnames(full.sp.nat), colnames(full.sp.gen))
+full.sp.nat.wide <- full.sp.nat
