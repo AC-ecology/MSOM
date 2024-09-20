@@ -1,6 +1,6 @@
 # MSOM
 Simulation and model fitting code to accompany "Sample size considerations for species co-occurrence models".
-To run the code smoothly, we recommend opening the project "MSOM.RProj
+To run the code smoothly, we recommend opening the project ".RProj" object and run scripts from there. 
 
 R Script(s) descrption:
 # Data simulation
