@@ -8,9 +8,11 @@
 ## 3. Calculate bias, coverage rate for general parameters
 ## 4. Summarise results per sample size scenario
 ## 5. Combine Normal and Penalized likelihood results for each scenario
-## 6. Plot with ggplot, faceting for parameter
+## 6. Plot with ggplot and make relative bias tables
 
-
+### WARNING: Tables are produced to insert in a LaTeX editor, if you want
+###          to visualise in RStudio's viewer change `format = "latex"` to
+###          `format = "html` but bear in mind it might not render properly
 
 library(readr)
 library(tidyverse)
@@ -24,6 +26,9 @@ nsim <- 100
 nspecies <- 2
 
 # function for retreiving general params
+
+## INPUT:
+
 gen.param.fun <- function(beta, nspecies = 2, 
                           occ_formulas = NULL, occ_covs = NULL, seed = NULL){
   if(!is.null(seed)) set.seed(seed)
@@ -748,9 +753,6 @@ occ_covs = data.frame(occ_cov1 = 1,
 ## Read object
 scen3 <- read_rds("Results/Scenario3_2spNCovariate4_2intseed1337_simResults_v2.rds")
 
-
-ok <- scen3$State.params$SE
-
 ## Normal likelihood 
 State_sim3 <- scen3$State.params %>%
   group_by(n.sites, niter) %>%
@@ -1363,7 +1365,7 @@ full.covscen.mar <- rbind(full.scen1.mar %>% mutate(Scenario = "1 Slope"),
 
 
 ### Power plot(s) ------
-
+lik_labels <- c("LL"= "Log-Likelihood", "PL"="Penalised Likelihood")
 
 # Colour by Coeficent Regression type (Int v Slope) facet by Scenario
 ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope")%>% filter(n.sites >33), 
@@ -1408,8 +1410,8 @@ ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope")%>%
         panel.spacing=unit(0.2, "mm"))
 
 
-ggsave("Figures/CovariatesAllScenarios_Power_EffectSize_54min_v2.jpeg",
-       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
+# ggsave("Figures/CovariatesAllScenarios_Power_EffectSize_54min_v2.jpeg",
+#        width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
 
 # Colour by natural parameter order type (Int v Slope) facet by Scenario
 ggplot(full.covscen.nat %>% filter(order == "2nd" | CoefReg == "Slope")%>% filter(n.sites >33), 
@@ -1475,8 +1477,8 @@ ggplot(full.covscen.nat%>% filter(n.sites >33),
         panel.spacing=unit(0.2, "mm"))
 
 
-ggsave("Figures/CovariatesAllScenarios_NatPamRB_Order_54min_v2.jpeg",
-       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
+# ggsave("Figures/CovariatesAllScenarios_NatPamRB_Order_54min_v2.jpeg",
+#        width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
 
 ## Marginal probs ----
 
@@ -1513,9 +1515,219 @@ ggplot(full.covscen.mar,
         legend.spacing.x = unit(0.1, "mm"),
         panel.spacing=unit(0.2, "mm"))
 
-ggsave("Figures/CovariatesAllScenarios_MargProbRB_54min_v2.jpeg",
-       width = unit(4, "inches"),height = unit(2, "inches"), dpi = 600)
+# ggsave("Figures/CovariatesAllScenarios_MargProbRB_54min_v2.jpeg",
+#        width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
+
+
+# Let's make a fancy table ------
+library(kableExtra)
+
+colfunc<-colorRampPalette(c("red","pink"))
+Col.pallete <- c(colfunc(5), "white") # n = number of steps (sequentially change)
+
+table.color <- function(x){ case_when(
+  abs(x) <= 5~ Col.pallete[6],
+  abs(x) > 5 & abs(x) <=15 ~ Col.pallete[5],
+  abs(x) > 15 & abs(x) <=35 ~ Col.pallete[4],
+  abs(x) > 35 & abs(x) <=75 ~ Col.pallete[3],
+  abs(x) > 75 & abs(x) <100 ~ Col.pallete[2],
+  abs(x) >= 100 ~ Col.pallete[1]
+)}
+
+## Natural parameters ----
+### one slope  -----
+f1sl.nat.wide <- full.covscen.nat %>%
+  filter(Scenario == "1 Slope" & n.sites >50) %>%
+  select(n.sites, Parameter,  Lik, mu.p.bias) %>%
+  mutate(mu.p.bias = round(mu.p.bias*100, 2),
+         # Param.Type = factor(Param.Type,levels = c("Natural", "General")),
+         Parameter = factor(Parameter, levels = c("f1.0",
+                                                  "f2.0", 
+                                                  "f12.0", "f12.1"))) %>%
+  arrange(n.sites,Parameter, Lik) %>%
+  pivot_wider(names_from = c(Parameter), values_from = mu.p.bias)%>%
+  arrange(Lik)
+
+
+kable.1sl <- kableExtra::kbl(f1sl.nat.wide, booktabs = T, 
+                             col.names = c("N","Likelihood",
+                                           colnames(f1sl.nat.wide)[-c(1:2)]),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  add_header_above(c(" ", "", "1st Order" = 2, "2nd Order" = 2)) %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2,latex_hline = "major", 
+                row_group_label_position = "first") 
 
 
 
+# Loop over columns for column_spec
+for (col_num in 3:ncol(f1sl.nat.wide)) {
+  
+  kable.1sl <- kableExtra::column_spec(kable.1sl,
+                                       col_num,
+                                       background =  unlist(lapply(f1sl.nat.wide[[col_num]],function(x) table.color(x) )))
+}
+
+kable.1sl
+
+### Three slopes  -----
+f3sl.nat.wide <- full.covscen.nat %>%
+  filter(Scenario == "3 Slopes" & n.sites >50) %>%
+  select(n.sites, Parameter,  Lik, mu.p.bias) %>%
+  mutate(mu.p.bias = round(mu.p.bias*100, 2),
+         # Param.Type = factor(Param.Type,levels = c("Natural", "General")),
+         Parameter = factor(Parameter, levels = c("f1.0", "f1.1",
+                                                  "f2.0", "f2.1", 
+                                                  "f12.0", "f12.1"))) %>%
+  arrange(n.sites,Parameter, Lik) %>%
+  pivot_wider(names_from = c(Parameter), values_from = mu.p.bias)%>%
+  arrange(Lik)
+
+
+kable.3sl <- kableExtra::kbl(f3sl.nat.wide, booktabs = T, 
+                             col.names = c("N","Likelihood",
+                                           colnames(f3sl.nat.wide)[-c(1:2)]),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  add_header_above(c(" ", "", "1st Order" = 4, "2nd Order" = 2)) %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2,latex_hline = "major", 
+                row_group_label_position = "first") 
+
+
+
+# Loop over columns for column_spec
+for (col_num in 3:ncol(f3sl.nat.wide)) {
+  
+  kable.3sl <- kableExtra::column_spec(kable.3sl,
+                                       col_num,
+                                       background =  unlist(lapply(f3sl.nat.wide[[col_num]],function(x) table.color(x) )))
+}
+
+kable.3sl
+
+
+### Four slopes  -----
+f4sl.nat.wide <- full.covscen.nat %>%
+  filter(Scenario == "4 Slopes" & n.sites >50) %>%
+  select(n.sites, Parameter,  Lik, mu.p.bias) %>%
+  mutate(mu.p.bias = round(mu.p.bias*100, 2),
+         # Param.Type = factor(Param.Type,levels = c("Natural", "General")),
+         Parameter = factor(Parameter, levels = c("f1.0", "f1.1",
+                                                  "f2.0", "f2.1", 
+                                                  "f12.0", "f12.1", "f12.2"))) %>%
+  arrange(n.sites,Parameter, Lik) %>%
+  pivot_wider(names_from = c(Parameter), values_from = mu.p.bias)%>%
+  arrange(Lik)
+
+
+kable.4sl <- kableExtra::kbl(f4sl.nat.wide, booktabs = T, 
+                             col.names = c("N","Likelihood",
+                                           colnames(f4sl.nat.wide)[-c(1:2)]),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  add_header_above(c(" ", "", "1st Order" = 4, "2nd Order" = 3)) %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2,latex_hline = "major", 
+                row_group_label_position = "first") 
+
+
+
+# Loop over columns for column_spec
+for (col_num in 3:ncol(f4sl.nat.wide)) {
+  
+  kable.4sl <- kableExtra::column_spec(kable.4sl,
+                                       col_num,
+                                       background =  unlist(lapply(f4sl.nat.wide[[col_num]],function(x) table.color(x) )))
+}
+
+kable.4sl
+
+
+### Five slopes  -----
+f5sl.nat.wide <- full.covscen.nat %>%
+  filter(Scenario == "5 Slopes" & n.sites >50) %>%
+  select(n.sites, Parameter,  Lik, mu.p.bias) %>%
+  mutate(mu.p.bias = round(mu.p.bias*100, 2),
+         # Param.Type = factor(Param.Type,levels = c("Natural", "General")),
+         Parameter = factor(Parameter, levels = c("f1.0", "f1.1", "f1.2",
+                                                  "f2.0", "f2.1", 
+                                                  "f12.0", "f12.1", "f12.2"))) %>%
+  arrange(n.sites,Parameter, Lik) %>%
+  pivot_wider(names_from = c(Parameter), values_from = mu.p.bias)%>%
+  arrange(Lik)
+
+
+kable.5sl <- kableExtra::kbl(f5sl.nat.wide, booktabs = T, 
+                             col.names = c("N","Likelihood",
+                                           colnames(f5sl.nat.wide)[-c(1:2)]),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  add_header_above(c(" ", "", "1st Order" = 4, "2nd Order" = 4)) %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2,latex_hline = "major", 
+                row_group_label_position = "first") 
+
+
+
+# Loop over columns for column_spec
+for (col_num in 3:ncol(f5sl.nat.wide)) {
+  
+  kable.5sl <- kableExtra::column_spec(kable.5sl,
+                                       col_num,
+                                       background =  unlist(lapply(f5sl.nat.wide[[col_num]],function(x) table.color(x) )))
+}
+
+kable.5sl
+
+
+
+# Convergence rates ----
+
+full.scen.nat <- read.csv("Results/NullAllScenNat.csv")
+full.sp.nat   <- read.csv("Results/NetworkAllScenNat.csv")
+shared.vars   <- intersect(colnames(full.scen.nat), colnames(full.covscen.nat))
+
+all.scen.nat <- rbind(full.scen.nat[shared.vars], full.sp.nat[shared.vars], full.covscen.nat[shared.vars])
+
+
+conv.sum <- all.scen.nat %>%
+  mutate(Scenario = factor(Scenario, 
+                           levels = c("Scenario1",
+                                      "Scenario2",
+                                      "Scenario3",
+                                      "Scenario4",
+                                      "Scenario5",
+                                      "Scenario6",
+                                      "3 Species",
+                                      "4 Species",
+                                      "5 Species",
+                                      "1 Slope",
+                                      "3 Slopes",
+                                      "4 Slopes",
+                                      "5 Slopes"))) %>%
+  select(Scenario, Lik,n.sites, ndatasets) %>%
+  group_by(n.sites, Scenario, Lik) %>%
+  summarise(Conv.rate = unique(ndatasets)/100) %>%
+  ungroup()%>%
+  arrange(Lik, n.sites) %>%
+  pivot_wider(values_from = Conv.rate, names_from = c(Scenario), values_fill = 1) %>%
+  rename(N = n.sites, Likelihood = Lik)
+
+conv.sum[-c(1,2)] <- apply(conv.sum[-c(1,2)], 2 ,function(a) format(round(a, digits=2), nsmall = 2) )
+
+
+kableExtra::kbl(conv.sum, booktabs = T, format = "latex", 
+                linesep = "", align = "c", digits = 2,
+                col.names = c("N", "Likelihood", 
+                              1:6, paste0(3:5 , "Spp."),paste0(c(1, 3:5), "Slopes") ))%>%
+  add_header_above(c(" ", "", "Null models" = 6, "Network models" = 3, "Covariate models" = 4)) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2,latex_hline = "major", 
+                row_group_label_position = "first") 
 

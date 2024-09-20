@@ -1,9 +1,15 @@
 #######################################
-#### MSOM Simulation funciton     #####
+#### MSOM Simulation function     #####
 #######################################
 
+# Hello! In this script you will find three functions used in our study to simulate, 
+# fit and extract the data and parameter values for the Rota et al. (2016) co-occurrence model
 
-# function to derive general parameters (psi) from natural parameters (f's)
+
+
+# psi.fun ----
+# Description: function to derive general parameters (psi) from natural parameters (f's) 
+
 ## INPUT
 # f: matrix with ncol = 2^nspecies-1 ordered by paramter order-species (e.g. with 2 species: f= cbind(f1,f2,f12)) 
 #   and nrow = number of observations arising from linear predictor. If no covariates, nrow(f) can be 1
@@ -37,10 +43,20 @@ psi.fun <- function(f, nspecies = 2) {
   return(psi )
 }
 
-# psi.fun(f = cbind(beta1, beta2, beta12))
 
-# Function to apply CV and penalty to 
 
+# crv.Clipp21 -----
+# Description: Function adapted from Clipp et al. (2021) to get the likelihood under the chosen
+# penalty value through K-cross-validation (CV)
+
+
+## INPUT
+# l: penalty value for which to compute the cross validation
+# data: an 'unmarkedFrameOccuMulti' object containing the dataset
+# M: the number of partitions (i.e. folds) in which to split the data
+
+## Output
+# sum(cv): sum of the log-likelihood of all cross-validation folds
 
 crv.Clipp21 <- function(l, data, M = 5){
   seed = seed
@@ -77,8 +93,8 @@ crv.Clipp21 <- function(l, data, M = 5){
   
 }
 
-
-# Function to simulate data and fit a 2-species 
+# MSOM_simfit.fun.v2 ------
+# Description: Function to simulate data and fit a 2-species 
 # multi-species occupancy model (MSOM) from Rota et al. (2016)
 
 ## INPUT
@@ -433,8 +449,9 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
 }
 
 
-# Tue Apr 30 00:48:34 2024 ------------------------------
+# README ------------------------------
 # The function below is deprecated and should only be used for "Co-occurrence siumulation.R"
+# to run previous versions of the analyses
 
 ## INPUT
 # beta1: vector with regression coefficient(s) for linear predictor (in logit-scale)

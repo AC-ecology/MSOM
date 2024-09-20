@@ -1,6 +1,5 @@
-##############################################
-##### 3+Species model results processing #####
-##############################################
+# 3+Species model results processing #####
+  ##############################################
 
 # Workflow:
 ## 1. Load result object
@@ -8,7 +7,11 @@
 ## 3. Calculate bias, coverage rate for general parameters
 ## 4. Summarise results per sample size scenario
 ## 5. Combine Normal and Penalized likelihood results for each scenario
-## 6. Plot with ggplot, faceting for parameter
+## 6. Plot with ggplot and make relative bias tables
+
+### WARNING: Tables are produced to insert in a LaTeX editor, if you want
+###          to visualise in RStudio's viewer change `format = "latex"` to
+###          `format = "html` but bear in mind it might not render properly
 
 library(readr)
 library(tidyverse)
@@ -16,7 +19,6 @@ library(tidyverse)
 ### Shared features:
 ln.sites <- seq(3, 8, by = 0.5)
 nsites <- as.integer(exp(ln.sites))
-
 nsim <- 100
 
 # function for retreiving general params
@@ -93,14 +95,10 @@ gen.param.fun <- function(beta, nspecies = 2,
   return(psi)
 }
 
-
-
 # 3 Species Scenario  ----
-
 ln.sites <- seq(3, 8, by = 0.5)
 nsites <- as.integer(exp(ln.sites))
 exp(ln.sites)
-
 
 # Number of simulations (nsim) per sample size in N: 100
 nsim <- 100
@@ -581,18 +579,6 @@ Marg.prob.4sp <-  GenParam_sim4sp %>%
                         sum(og.psi[substr(Gen.Par,4,4) ==1])),
             bias = Marg.est - Marg.og, prop.bias = (Marg.est - Marg.og)/Marg.og) %>%
   ungroup()
-
-
-State_sim.4sp %>%
-  filter(conv == 1) %>%
-  group_by(n.sites, niter) %>%
-  summarise(ok =  c(plogis(Estimate[Parameter == "f1.0"]),
-                    plogis(sum(Estimate[Parameter %in% c("f1.0", "f12.0")])),
-                    plogis(Estimate[Parameter %in% c("f1.0")]),
-                    plogis(sum(Estimate[Parameter %in% c("f1.0", "f13.0")])),
-                    plogis(Estimate[Parameter %in% c("f1.0")]),
-                    plogis(sum(Estimate[Parameter %in% c("f1.0", "f14.0")]))),
-            )
 
 
 Cond.prob.4sp <-  State_sim.4sp %>%
@@ -1429,40 +1415,17 @@ Cond.prob5sp.pl.sum <- Cond.prob.5sp.pl %>%
             Lik = "PL") %>% 
   ungroup()
 
-
-
-
 ###### Combining LL and PL into one for plotting
 
 ## Natural parameters
 full.scen5sp.nat <- rbind(State_sim.5sp.sum, State_sim.5sp.pl.sum)
-# 
-# full.scen5sp.nat <- full.scen5sp.nat %>%
-#   mutate(order = ifelse(nchar(Parameter)>4, "2nd", "1st"))
-
 ## General parameters
-
 full.scen5sp.gen <- rbind(GenParam_sim5sp.sum, GenParam_sim5sp.pl.sum)
-
 ## Marginal probabilities
 full.scen5sp.mar <- rbind(Marg.prob5sp.sum, Marg.prob5sp.pl.sum)
-
-ggplot(full.scen5sp.mar)+
-  geom_hline(yintercept = 0.05, col = "red", linetype = "dotted")+
-  geom_hline(yintercept = -0.05, col = "red", linetype = "dotted")+
-  geom_line(aes(x = log(n.sites), y = mu.p.bias, col = Species, linetype = Lik), lwd = 0.8)+
-  labs(x = "Log(Number of Sites)", y = "Relative Bias")+
-  scale_y_continuous(limits = c(-0.2, 0.2), labels = scales::percent_format(), breaks = seq(-0.2, 0.2, by = 0.05))+
-  theme_bw()
-
-
 ## Conditional probabilities
 full.scen5sp.con <- rbind(Cond.prob5sp.sum, Cond.prob5sp.pl.sum)
-
-
-
-
-### All Scenarios plots -----
+# All Scenarios plots -----
 
 safe_colorblind_palette <- c("#88CCEE", "#CC6677", "#DDCC77", "#117733", "#332288", "#AA4499", 
                              "#44AA99", "#999933", "#882255", "#661100", "#6699CC", "#888888")
@@ -1473,22 +1436,25 @@ full.sp.nat <- rbind(full.scen3sp.nat %>% mutate(Scenario = "3 Species"),
                      full.scen5sp.nat %>% mutate(Scenario = "5 Species"))
 
 full.sp.nat$order <-  ifelse(nchar(full.sp.nat$Parameter)>4, "2nd", "1st")
+full.sp.nat$Param.Type <-  "Natural"
 
 
 full.sp.gen <- rbind(full.scen3sp.gen %>% mutate(Scenario = "3 Species"),
                      full.scen4sp.gen %>% mutate(Scenario = "4 Species"),
                      full.scen5sp.gen %>% mutate(Scenario = "5 Species"))
-
+full.sp.gen$Param.Type <- "General"
+full.sp.gen$Parameter <- full.sp.gen$Gen.Par
 
 
 full.sp.con <- rbind(full.scen3sp.con %>% mutate(Scenario = "3 Species"),
                      full.scen4sp.con %>% mutate(Scenario = "4 Species"),
                      full.scen5sp.con %>% mutate(Scenario = "5 Species"))
+full.sp.con$Prob.Type <- "Conditional"
 
 full.sp.mar <- rbind(full.scen3sp.mar %>% mutate(Scenario = "3 Species"),
                      full.scen4sp.mar %>% mutate(Scenario = "4 Species"),
                      full.scen5sp.mar %>% mutate(Scenario = "5 Species"))
-
+full.sp.mar$Prob.Type <- "Marginal"
 
 full.sp.con$Species1 <- substr(full.sp.con$Cond.prob, 1, 3)
 full.sp.con$Species2 <- substr(full.sp.con$Cond.prob, 7, 9)
@@ -1500,7 +1466,7 @@ full.sp.con$ZS       <- ifelse(substr(full.sp.con$Cond.prob,
 
 
 lik_labels <- c("LL"= "Log-Likelihood", "PL"="Penalised Likelihood")
-#### Power Plots
+### Power Plots ----
 colfunc2<-colorRampPalette(safe_colorblind_palette[2:5])
 
 Col.pallete2 <- colfunc2(10) # n = number of steps (sequentially change)
@@ -1535,32 +1501,14 @@ ggplot(full.sp.nat %>% filter(n.sites >33 & order == "2nd"),
           legend.spacing.x = unit(0.1, "mm"),
           panel.spacing=unit(0.2, "mm"))
 
-ggsave("Figures/3PlusSp_AllScenarios_Power_v2.1.jpeg",
-       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = "retina")
+# ggsave("Figures/3PlusSp_AllScenarios_Power_v2.1.jpeg",
+#        width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = "retina")
 
 
 
-### Bias plots
+### Relative Bias plots -----
 
 ### Natural parameters
-ggplot(full.sp.nat %>% filter(n.sites >33), 
-       aes(x = log(n.sites), y = mu.p.bias, group = interaction(Parameter, Lik)))+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "black")+
-  geom_line(aes(col = interaction(order)))+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased"),
-                 col = interaction(order)))+
-  scale_alpha_manual(values = c(1, 0.3))+
-  facet_grid(Scenario~Lik)+
-  labs(x = "Log(Number of Sites)", y = "Relative Bias", col = "Order")+ guides(alpha = "none")+
-  coord_cartesian(ylim =  c(-.5, .5))+
-  scale_x_continuous(breaks = log(nsites), labels = nsites)+
-  scale_y_continuous(labels = scales::percent_format() )+
-  scale_colour_manual(values = cbbPalette[c(6:7)])+
-  theme_bw()
-
-### Without grid lines and adding grey rectangle
-
 ggplot(full.sp.nat %>% filter(n.sites >33), 
        aes(x = log(n.sites), y = mu.p.bias, group = interaction(Parameter, Lik)))+
   geom_rect(aes(xmin = 2.5, xmax = 8.5, ymin = -0.05, ymax = 0.05), fill = "grey90",
@@ -1594,11 +1542,11 @@ ggplot(full.sp.nat %>% filter(n.sites >33),
         legend.spacing.x = unit(0.1, "mm"),
         panel.spacing=unit(0.2, "mm"))
 
-ggsave("Figures/3PlusSp_AllScenarios_NaturalRelBias_v2.jpeg",
-       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
+# ggsave("Figures/3PlusSp_AllScenarios_NaturalRelBias_v2.jpeg",
+#        width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
 
 
-### General Parameters
+### General Parameters -----
 
 ggplot(full.sp.gen, 
        aes(x = factor(n.sites), y = mu.p.bias, group = interaction(Gen.Par, Lik)))+
@@ -1617,32 +1565,8 @@ ggplot(full.sp.gen,
   # scale_colour_manual(values =safe_colorblind_palette[-1])+
   theme_bw()+ guides(linetype = "none")
 
-### Marginal probabilities (combine with genereral)
-ggplot(full.sp.mar, 
-       aes(x = log(n.sites), y = mu.p.bias, group = interaction(Species, Lik)))+
-  geom_rect(aes(xmin = 2.5, xmax = 8.5, ymin = -0.05, ymax = 0.05), fill = "grey95",
-            inherit.aes = F, alpha = 0.1)+
-  geom_hline(yintercept = 0, linetype = "dashed", col = "black")+
-  
-  geom_line(aes(col = interaction(Species), linetype = Lik), lwd = 0.8)+
-  geom_point(size = 2.5,
-             aes(alpha = ifelse(abs(mu.p.bias)>0.05, "Biased", "Unbiased"),
-                 col = interaction(Species)))+
-  scale_alpha_manual(values = c(1, 0.3))+
-  facet_grid(Scenario~Lik)+
-  labs(x = "Log(Number of Sites)", y = "Relative Bias", col = "Species")+ guides(alpha = "none")+
-  coord_cartesian(ylim =  c(-0.1, 0.1), xlim = c(3, 8))+
-  scale_y_continuous(labels = scales::percent_format() )+
-  scale_colour_manual(values = safe_colorblind_palette[2:11])+
-  theme_bw()+
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        strip.text.y = element_text(size = 12, color = "black", face = "bold"),
-        strip.text.x = element_text(size = 12, color = "black", face = "bold"),
-        axis.text.y = element_text(size = 12, color = "black"),
-        axis.text.x =element_text(size = 12, color = "black") ,
-        axis.title.x = element_text(size = 15, color = "black") ,
-        axis.title.y = element_text(size = 15, color = "black"))
+### Marginal probabilities ----
+
 
 ###### Marg Prob with Nsites
 ggplot(full.sp.mar, 
@@ -1743,13 +1667,12 @@ ggplot(full.sp.mar %>% filter(n.sites >33),
         panel.spacing=unit(0.5, "mm"))
 
 
-ggsave("Figures/MultipleSpeciesAllScenarios_RelativevBias_MargProb_NsitesAxis_v2.jpeg",
-       width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
+# ggsave("Figures/MultipleSpeciesAllScenarios_RelativevBias_MargProb_NsitesAxis_v2.jpeg",
+#        width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
 
-### Conditionals!
+### Figures for the conditional probabilities ------
 
 Scen3Sp <- full.sp.con %>% filter(Scenario == "3 Species")
-
 
 ggplot(Scen3Sp ,aes(x = log(n.sites), y = mu.p.bias, group(Cond.Prob, Lik)))+
   geom_line(aes(col = ZS, linetype = Lik), lwd = 0.8)+
@@ -1759,7 +1682,6 @@ ggplot(Scen3Sp ,aes(x = log(n.sites), y = mu.p.bias, group(Cond.Prob, Lik)))+
   scale_y_continuous(labels = scales::percent_format() )+
   scale_colour_manual(values = safe_colorblind_palette[2:11])+
   theme_bw()
-
 
 Scen4Sp <- full.sp.con %>% filter(Scenario == "4 Species")
 
@@ -1773,23 +1695,184 @@ ggplot(Scen4Sp ,aes(x = log(n.sites), y = mu.p.bias, group(Cond.Prob, Lik)))+
   scale_colour_manual(values = safe_colorblind_palette[2:11])+
   theme_bw()
 
-Scen5Sp <- full.sp.con %>% filter(Scenario == "5 Species")
+Scen5Sp <- full.sp.con %>% 
+  filter(Scenario == "5 Species" & n.sites > 33) 
 
+
+
+dummy.df <- as.data.frame(cbind(z = 0, expand.grid(Species1 =paste0("Sp", 1:5),
+                                                   Species2 =paste0("Sp", 1:5))))
+
+dummy.df$z[ which(dummy.df$Species1 == dummy.df$Species2)] <- NA
 
 ggplot(Scen5Sp ,aes(x = log(n.sites), y = mu.p.bias, group(Cond.Prob, Lik)))+
-  geom_line(aes(col = ZS, linetype = Lik), lwd = 0.8)+
+  geom_rect(aes(xmin = 2.5, xmax = 8.5, ymin = -0.05, ymax = 0.05), fill = "grey90",
+            inherit.aes = F, alpha = 0.1)+
+  geom_hline(data = dummy.df, aes(yintercept = z), linetype = "dashed", 
+             col = "black", lwd = 0.2)+
+  geom_line(aes(col = ZS, linetype = Lik), lwd = 0.4)+
   facet_grid(Species1~Species2)  +
-  labs(x = "Log(Number of Sites)", y = "Relative Bias", col = "Species")+ guides(alpha = "none")+
+  labs(x = "Number of Sites", y = "Relative Bias (%)", col = "Status",
+       linetype = "Likelihood")+ guides(alpha = "none")+
   coord_cartesian(ylim =  c(-0.5, 0.5))+
+  coord_cartesian(ylim =  c(-0.2, 0.2), xlim = c(4, 8))+
+  scale_x_continuous(breaks = log(nsites), labels = nsites)+
   scale_y_continuous(labels = scales::percent_format() )+
   scale_colour_manual(values = safe_colorblind_palette[2:11])+
-  theme_bw()
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text.y = element_text(size = 3, color = "black",  margin = margin(r = 2, l = 2)),
+        strip.text.x = element_text(size = 3, color = "black", margin = margin(b = 2, t = 2)),
+        axis.text.y = element_text(size = 3, color = "black"),
+        axis.text.x =element_text(size = 2, color = "black") ,
+        axis.title.x = element_text(size = 4, color = "black") ,
+        axis.title.y = element_text(size = 4, color = "black"),
+        legend.text = element_text(size = 3, margin = margin(l = 2)),
+        legend.title = element_text(size = 4, margin = margin(b = 2) ),
+        legend.box.spacing = unit(1, "mm"),
+        legend.key.spacing.y = unit(0, "mm"),
+        legend.key.size = unit(2,"mm"),
+        legend.spacing.x = unit(0.1, "mm"),
+        panel.spacing=unit(0.5, "mm"), 
+        axis.ticks.length.x = unit(0.5,"mm"),
+        axis.ticks.length.y = unit(0.5,"mm") )
 
 
-### Let's make a fancy table whoop whoop ------
+# ggsave("Figures/FiveSpecies_RelativevBias_CondProb_NsitesAxis_v2.jpeg",
+#        width = unit(4, "inches"),height = unit(2.5, "inches"), dpi = 600)
+
+# Let's make a fancy table ------
+library(kableExtra)
+
+colfunc<-colorRampPalette(c("red","pink"))
+Col.pallete <- c(colfunc(5), "white") # n = number of steps (sequentially change)
+
+table.color <- function(x){ case_when(
+  abs(x) <= 5~ Col.pallete[6],
+  abs(x) > 5 & abs(x) <=15 ~ Col.pallete[5],
+  abs(x) > 15 & abs(x) <=35 ~ Col.pallete[4],
+  abs(x) > 35 & abs(x) <=75 ~ Col.pallete[3],
+  abs(x) > 75 & abs(x) <100 ~ Col.pallete[2],
+  abs(x) >= 100 ~ Col.pallete[1]
+)}
+
+## Natural parameters ----
+
+### Three species -----
+f3sp.nat.wide <- full.sp.nat %>%
+  filter(Scenario == "3 Species" & n.sites >50) %>%
+  select(n.sites, Parameter,  Lik, mu.p.bias) %>%
+  mutate(mu.p.bias = round(mu.p.bias*100, 2),
+         # Param.Type = factor(Param.Type,levels = c("Natural", "General")),
+         Parameter = gsub(".0", "", Parameter),
+         Parameter = factor(Parameter, levels = c("f1", "f2", "f3", 
+                                                  "f12", "f13",  "f23"))) %>%
+  arrange(n.sites,Parameter, Lik) %>%
+  pivot_wider(names_from = c(Parameter), values_from = mu.p.bias)%>%
+  arrange(Lik)
 
 
-full.sp.gen$Parameter <- full.sp.gen$Gen.Par
+kable.3sp <- kableExtra::kbl(f3sp.nat.wide, booktabs = T, 
+                             col.names = c("N","Likelihood",
+                                           colnames(f3sp.nat.wide)[-c(1:2)]),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  add_header_above(c(" ", "", "1st Order" = 3, "2nd Order" = 3)) %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2,latex_hline = "major", 
+                row_group_label_position = "first") 
 
-intersect(colnames(full.sp.nat), colnames(full.sp.gen))
-full.sp.nat.wide <- full.sp.nat
+
+# Loop over columns for column_spec
+for (col_num in 3:ncol(f3sp.nat.wide)) {
+  
+  kable.3sp <- kableExtra::column_spec(kable.3sp,
+                                       col_num,
+                                       background =  unlist(lapply(f3sp.nat.wide[[col_num]],function(x) table.color(x) )))
+}
+
+kable.3sp
+
+
+### Four species -----
+f4sp.nat.wide <- full.sp.nat %>%
+  filter(Scenario == "4 Species") %>%
+  select(n.sites, Parameter,  Lik, mu.p.bias) %>%
+  mutate(mu.p.bias = round(mu.p.bias*100, 2),
+         # Param.Type = factor(Param.Type,levels = c("Natural", "General")),
+         Parameter = gsub(".0", "", Parameter),
+         Parameter = factor(Parameter, levels = c("f1", "f2", "f3", "f4",
+                                                  "f12", "f13", "f14", "f23",
+                                                  "f24", "f34"))) %>%
+  arrange(n.sites,Parameter, Lik) %>%
+  pivot_wider(names_from = c(Parameter), values_from = mu.p.bias)%>%
+  arrange(Lik)
+
+
+kable.4sp <- kableExtra::kbl(f4sp.nat.wide, booktabs = T, 
+                             col.names = c("N","Likelihood",
+                                           colnames(f4sp.nat.wide)[-c(1:2)]),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  add_header_above(c(" ", "", "1st Order" = 4, "2nd Order" = 6)) %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2,latex_hline = "major", 
+                row_group_label_position = "first") 
+
+
+
+# Loop over columns for column_spec
+for (col_num in 3:ncol(f4sp.nat.wide)) {
+  
+  kable.4sp <- kableExtra::column_spec(kable.4sp,
+                                       col_num,
+                                       background =  unlist(lapply(f4sp.nat.wide[[col_num]],function(x) table.color(x) )))
+}
+
+kable.4sp
+
+
+
+### Five species -----
+f5sp.nat.wide <- full.sp.nat %>%
+  filter(Scenario == "5 Species") %>%
+  select(n.sites, Parameter,  Lik, mu.p.bias) %>%
+  mutate(mu.p.bias = round(mu.p.bias*100, 2),
+         # Param.Type = factor(Param.Type,levels = c("Natural", "General")),
+         Parameter = gsub(".0", "", Parameter),
+         Parameter = factor(Parameter, levels = c("f1", "f2", "f3", "f4","f5",
+                                                  "f12", "f13", "f14","f15",
+                                                  "f23","f24", "f25",
+                                                  "f34", "f35",
+                                                  "f45"))) %>%
+  arrange(n.sites,Parameter, Lik) %>%
+  pivot_wider(names_from = c(Parameter), values_from = mu.p.bias)%>%
+  arrange(Lik)
+
+
+kable.5sp <- kableExtra::kbl(f5sp.nat.wide, booktabs = T, 
+                             col.names = c("N","Likelihood",
+                                           colnames(f5sp.nat.wide)[-c(1:2)]),
+                             digits = 1,align = "c", 
+                             linesep = "", format = "latex") %>%
+  add_header_above(c(" ", "", "1st Order" = 5, "2nd Order" = 10)) %>%
+  # kable_styling(latex_options = c( "scale_down")) %>%
+  column_spec(1, bold = T) %>%
+  collapse_rows(columns = 2,latex_hline = "major", 
+                row_group_label_position = "first") 
+
+
+
+# Loop over columns for column_spec
+for (col_num in 3:ncol(f5sp.nat.wide)) {
+  
+  kable.5sp <- kableExtra::column_spec(kable.5sp,
+                                       col_num,
+                                       background =  unlist(lapply(f5sp.nat.wide[[col_num]],function(x) table.color(x) )))
+}
+
+kable.5sp
+
