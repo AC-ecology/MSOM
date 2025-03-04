@@ -1790,8 +1790,10 @@ for (col_num in 3:ncol(f3sp.nat.wide)) {
   
   kable.3sp <- kableExtra::column_spec(kable.3sp,
                                        col_num,
-                                       background =  unlist(lapply(f3sp.nat.wide[[col_num]],function(x) table.color(x) )))
-}
+                                       background =  unlist(lapply(f3sp.nat.wide[[col_num]],
+                                                                   function(x) table.color(x) )))
+
+  }
 
 kable.3sp
 

@@ -289,8 +289,6 @@ model.type = "Null"
 saveRDS(object = scen6,file = paste0("Results/",scenario, model.type, "seed", seed,
                                      "_simResults_v2.rds" ))
 
-scen6$time.ellapsed
-
 
 # Covariate models --------------
 

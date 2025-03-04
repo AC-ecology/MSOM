@@ -699,6 +699,7 @@ full.scen.nat$NatPam <- rep(c("f1.0", "f12.0", "f2.0"),nrow( full.scen.nat)/3)
 full.scen.nat$CoeffReg <- rep(c("alpha0", "beta0", "gamma0"), nrow(full.scen.nat)/3)
 full.scen.nat$Parameter <- rep(c("f1.0", "f12.0", "f2.0"),nrow( full.scen.nat)/3)
 
+full.scen.nat$CR
 ### General Parameters
 
 full.scen.gen <- rbind(GenParam_sim1.sum, GenParam_sim2.sum, GenParam_sim5.sum,
@@ -740,6 +741,7 @@ full.scen.natgen <- rbind(full.scen.nat[, shared_cols],full.scen.gen[,shared_col
 full.scen.natgen$Param.Type <- c(rep("Natural", nrow(full.scen.nat)),
                                  rep("General", nrow(full.scen.gen)))
 
+
 #### Combine Marginal & Conditional probs (combo)
 shared_cols1 <- intersect(colnames(full.scen.con), colnames(full.scen.mar))
 full.scen.mar.con <-  rbind(full.scen.mar[, shared_cols1],full.scen.con[,shared_cols1])
@@ -748,9 +750,19 @@ library(kableExtra)
 
 colfunc<-colorRampPalette(c("red","pink"))
 Col.pallete <- c(colfunc(5), "white") # n = number of steps (sequentially change)
+# table.color <- function(x){ case_when( # for 5% bias as nominal
+#   abs(x) <= 5~ Col.pallete[6],
+#   abs(x) > 5 & abs(x) <=15 ~ Col.pallete[5],
+#   abs(x) > 15 & abs(x) <=35 ~ Col.pallete[4],
+#   abs(x) > 35 & abs(x) <=75 ~ Col.pallete[3],
+#   abs(x) > 75 & abs(x) <100 ~ Col.pallete[2],
+#   abs(x) >= 100 ~ Col.pallete[1]
+# )}
+
+
 table.color <- function(x){ case_when(
-  abs(x) <= 5~ Col.pallete[6],
-  abs(x) > 5 & abs(x) <=15 ~ Col.pallete[5],
+  abs(x) <= 10~ Col.pallete[6],
+  abs(x) > 10 & abs(x) <=15 ~ Col.pallete[5],
   abs(x) > 15 & abs(x) <=35 ~ Col.pallete[4],
   abs(x) > 35 & abs(x) <=75 ~ Col.pallete[3],
   abs(x) > 75 & abs(x) <100 ~ Col.pallete[2],
@@ -839,7 +851,9 @@ for (col_num in 3:ncol(natgen.long.sub)) {
   
   kable_out <- kableExtra::column_spec(kable_out,
                                       column = col_num,
-                                       background =  unlist(lapply(natgen.long.sub[[col_num]],function(x) table.color(x) )))
+                                       background =  unlist(lapply(natgen.long.sub[[col_num]],
+                                                                   function(x) table.color(x) )),
+                                      italic = )
 }
 
 kable_out
