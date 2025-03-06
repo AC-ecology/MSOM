@@ -78,13 +78,13 @@ c(sum(og.psi[substr(Gen.Par,1,1) ==1]),
   sum(og.psi[substr(Gen.Par,3,3) ==1]))
 
 ## Run
-seed <- 1337
+seed <- 1283
 scen.3sp <- MSOM_simfit.fun.v2(beta = beta, p_true = p_true,
                                nsites = nsites, 
                                nspecies = nspecies,
                                store.data = F,
                                seed = seed, 
-                               nsim = nsim, J = J)
+                               nsim = 10, J = J)
 
 
 scenario <- "Scenario1_3sp"

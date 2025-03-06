@@ -78,6 +78,7 @@ crv.Clipp21 <- function(l, data, M = 5){
       fit <- occuMulti(detformulas = det_formulas,
                        stateformulas = occ_formulas,
                        data = data[(1:n)[-(s[i]:e[i])]],
+                       maxOrder = 2,
                        penalty = l, se = T, boot = 100))) == 'try-error'
     
     
@@ -155,8 +156,10 @@ MSOM_simfit.fun.v2 <- function(beta, nsites, nspecies = 2, J = 3, nocc_covs = 3,
   
   if(is.null(occ_formulas))  occ_formulas = rep("~1", nspecies+ncol(combn(1:nspecies, 2)))
   if(is.null(det_formulas))  det_formulas = rep("~1", nspecies)
-  
-   # nsites = 50; nsim = 2 #only to use for debugging 
+  #### Debugging settings
+   # nsites = 50; nsim = 2; ndet_covs = nocc_covs = nspecies; sim.only = F; store.data = F  #only to use for debugging
+   
+   #######~~~~~~~~~~~~~~~~~~~~~
   for(N in nsites){
     occ_covs <- as.data.frame(matrix(rnorm(N * nocc_covs),ncol=nocc_covs))
     names(occ_covs) <- paste('occ_cov',1:nocc_covs,sep='')
